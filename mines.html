@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Kaboom!</title>
+    </head>
+    <body>
+        <table>
+            <tr>
+                <td>
+                    <div id = "board" class = "item">
+                        <canvas id="minefield" width="1600" height="1600" class = "divider"></canvas> 
+                    </div>
+                </td>
+                <td width="100%">
+                    <div id = "info" class = "item">
+                        <p id = "time">00:00.00</p>
+                        <p id = "flags">🏳 0/10</p>
+                    </div>
+                </td>
+                <td>
+                    <div id = "leaderboard" class = "item">
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </body>
+    <style>
+        td {
+            vertical-align: top;
+        }
+        #leaderboard {
+            text-align: right
+        }
+        #info {
+            margin-left: 20px;
+        }
+        .item {
+            vertical-align:top
+        }
+        #minefield {
+            border:1px solid #000000;
+        }
+        p {
+            font-family: Andale Mono, AndaleMono, monospace;
+        }
+
+    </style>
+    <script>
+        const minefield = document.getElementById("minefield");
+        const minefieldDim = (window.innerHeight - 20) 
+        const flagCounter = document.getElementById("flags")
+
+        var ctx = minefield.getContext("2d");
+        var firstClick = true
+        var mineCount = 10
+        var dimension = 8
+        var board = []
+        var stat = []
+        var cursorX
+        var cursorY
+        var boxX
+        var boxY
+        var gameOver = false
+        var startTime = 0
+        var flagCount = 0
+        var finalTime = 0 
+
+        var canvas = document.createElement('canvas');
+        canvas.width = 32;canvas.height = 32;
+        var fav = canvas.getContext('2d');
+        var img = new Image();
+        img.src = '/favicon.ico';
+        fav.drawImage(img, 0, 0);
+        fav.lineWidth = 2.7
+        fav.beginPath()
+        fav.fillStyle = 'red'
+        fav.strokeStyle = 'red'
+        fav.arc(
+                    (.5)*(32),
+                    (.5)*(32),
+                    .4*(32),
+                    0,
+                    2 * Math.PI
+                )
+        fav.stroke()
+        fav.fill()
+        fav.closePath()
+        fav.beginPath()
+        fav.strokeStyle = 'black'
+        fav.arc(
+                    (.5)*(32),
+                    (.5)*(32),
+                    .2*(32),
+                    0,
+                    2 * Math.PI
+                )
+        fav.stroke()
+        for (let i=0; i<6; i++) {
+            line(
+                (.2*Math.cos((Math.PI/6)+i*(Math.PI/3))+.5)*(32),
+                (.2*Math.sin((Math.PI/6)+i*(Math.PI/3))+.5)*(32),
+                (.3*Math.cos((Math.PI/6)+i*(Math.PI/3))+.5)*(32),
+                (.3*Math.sin((Math.PI/6)+i*(Math.PI/3))+.5)*(32),
+                true,
+                fav
+            )
+        }
+        fav.closePath()
+
+        var link = document.createElement('link');
+        link.type = 'image/x-icon';
+        link.rel = 'shortcut icon';
+        link.href = canvas.toDataURL("image/x-icon");
+        document.getElementsByTagName('head')[0].appendChild(link);
+
+        minefield.style.height = minefieldDim.toString()+"px"
+        minefield.style.width = minefieldDim.toString()+"px"
+        window.focus();
+        minefield.oncontextmenu = function(e) { e.preventDefault(); e.stopPropagation(); }
+
+        if(localStorage.getItem('leaderboard') === null) {
+            localStorage.setItem('leaderboard', JSON.stringify([]))
+        }
+
+        var leaderboard = JSON.parse(localStorage.getItem('leaderboard'))
+
+
+        drawGrid()
+
+        for (i = 0; i < dimension; i++){
+            let line = []     
+            for (j = 0; j < dimension; j++){
+                line.push(0)
+            }
+            board.push(line)
+        }
+
+        for (i = 0; i < dimension; i++){
+            let line = []     
+            for (j = 0; j < dimension; j++){
+                line.push(false)
+            }
+            stat.push(line)
+        }
+
+        leaderboard.forEach(element => {
+            p = document.createElement('p')
+            p.innerHTML = formatTimeElapsed(element)
+            p.class = "times"
+            document.getElementById('leaderboard').append(p)
+        });
+
+        function randNum(lim) {
+            return Math.floor((Math.random()*lim))
+        }
+
+        function compare(a, b) {
+            return(a.length === b.length && a.every((element, index) => element === b[index]))
+        }
+
+        function containsList(parent, child) {
+            let contains = false
+            parent.forEach(element => {
+                if(compare(element, child)) {
+                    contains = true
+                }
+            });
+            return contains
+        }
+
+        function formatTimeElapsed(time, timer) {
+            if (startTime == 0 && timer) {
+                return "00:00.000"
+            }
+            // Date.now() - startTime;
+            const minutes = Math.floor(time / (60 * 1000));
+            const seconds = Math.floor((time % (60 * 1000)) / 1000);
+            const milliseconds = Math.floor((time % 1000));
+            const formattedTime = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}.${milliseconds.toString().padStart(3, '0')}`;
+            return formattedTime;
+        }
+
+        function propagate(xo,yo) {
+            if((dimension*dimension) - (9 + mineCount) < 0) {
+                mineCount = ((dimension*dimension) - 9)
+            }
+            for (i = 0; i <= (mineCount-1); i++){
+                let box = [randNum(dimension), randNum(dimension)]
+                let range = []
+                let clear = true
+                for (let y = -1; y < 2; y++) {
+                    if(yo+y >= 0 && yo+y < dimension) {
+                        for (let x = -1; x < 2; x++) {
+                            if(xo+x >= 0 && xo+x < dimension) {
+                                range.push([(xo+x), (yo+y)])
+                            }
+                        }
+                    }
+                }
+                while(board[box[1]][box[0]] == 9 || containsList(range, [(box[0]), (box[1])])) {
+                    box = [randNum(dimension), randNum(dimension)]
+                }
+                board[box[1]][box[0]] = 9
+                for (let y = -1; y < 2; y++) {
+                    if(box[1]+y >= 0 && box[1]+y <= (dimension-1)) {
+                        for (let x = -1; x < 2; x++) {
+                            if(box[0]+x >= 0 && box[0]+x < dimension) {
+                                if(board[box[1]+y][box[0]+x] != 9) {
+                                    board[box[1]+y][box[0]+x]++
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+
+        /**
+         * @param {num} x1
+         * @param {num} y1
+         * @param {num} x2
+         * @param {num} y2
+         */
+        function line(x1, y1, x2, y2, round, canv) {
+            if(!canv) {
+                canv = ctx
+            }
+            canv.beginPath(); 
+            if(round){ctx.lineCap = "round"}
+            canv.moveTo(x1, y1);
+            canv.lineTo(x2, y2);
+            canv.stroke();
+            canv.closePath();
+        }
+
+        function drawGrid(){
+            for (i = 1; i < dimension; i++) {
+                let width = minefield.width
+                let size = width/dimension
+                // console.log(i*size)
+                // console.log(width)
+                line(i*size, 0, i*size, width, 1)
+                line(0, i*size, width, i*size, 1)
+                line(i*size, 0, i*size, width, 1)
+                line(0, i*size, width, i*size, 1)
+            }
+        }
+
+        function draw(x, y) {
+            stat[y][x] = true
+            ctx.beginPath(); 
+            ctx.fillStyle = `rgb(
+                ${220-((25/5)*board[y][x])},
+                ${220-((180/5)*board[y][x])}, 
+                ${220-((180/5)*board[y][x])}
+                )`
+            ctx.fillRect(
+                ((x/dimension)*minefield.width), 
+                ((y/dimension)*minefield.width), 
+                (minefield.width/dimension), 
+                (minefield.width/dimension)
+                );
+            ctx.textAlign = "center"
+            ctx.font = `bold ${(.8)*(minefield.width/dimension)}px "Andale Mono", monospace`;
+            ctx.fillStyle="black"
+            if(board[y][x] != 9 && board[y][x] != 0) {
+                ctx.fillText(
+                    board[y][x],
+                    (.5+x)*(minefield.width/dimension),
+                    (.8+y)*(minefield.width/dimension)
+                    )
+            } else if (board[y][x] != 0) {
+                ctx.lineWidth = minefield.width/(dimension*10)
+                ctx.arc(
+                    (.5+x)*(minefield.width/dimension),
+                    (.5+y)*(minefield.width/dimension),
+                    .2*(minefield.width/dimension),
+                    0,
+                    2 * Math.PI
+                )
+                ctx.stroke(); 
+                for (let i=0; i<6; i++) {
+                    line(
+                        (.2*Math.cos((Math.PI/6)+i*(Math.PI/3))+x+.5)*(minefield.width/dimension),
+                        (.2*Math.sin((Math.PI/6)+i*(Math.PI/3))+y+.5)*(minefield.width/dimension),
+                        (.3*Math.cos((Math.PI/6)+i*(Math.PI/3))+x+.5)*(minefield.width/dimension),
+                        (.3*Math.sin((Math.PI/6)+i*(Math.PI/3))+y+.5)*(minefield.width/dimension),
+                        true
+                    )
+                }
+                ctx.lineWidth = minefield.width/800
+            }
+            ctx.closePath();
+        }
+
+        function reveal(xo, yo, click) {
+            console.log(`reveal: ${xo}, ${yo} - ${click}`)
+            if(stat[yo][xo] === false){
+                draw(xo, yo)
+            } else if (stat[yo][xo] == "flag" && click === false){
+                stat[yo][xo] = false
+                draw(xo, yo)
+            }
+            if (board[yo][xo] == 9 && stat[yo][xo] != "flag") {
+                lose()
+            }
+            if (board[yo][xo] == 0) {
+                for (let y = -1; y < 2; y++) {
+                    if(yo+y >= 0 && yo+y < dimension) {
+                        for (let x = -1; x < 2; x++) {
+                            if(xo+x >= 0 && xo+x < dimension) {
+                                if(stat[yo+y][xo+x] === false || stat[yo+y][xo+x] === "flag"){
+                                    reveal(xo+x, yo+y, false)
+                                }
+                            }
+                        }
+                    }
+                }
+            } else if (board[yo][xo] != "m" && click) {
+                let flags = 0
+                for (let y = -1; y < 2; y++) {
+                    if(yo+y >= 0 && yo+y < dimension) {
+                        for (let x = -1; x < 2; x++) {
+                            if(xo+x >= 0 && xo+x < dimension) {
+                                if(stat[yo+y][xo+x] === "flag"){
+                                    flags++
+                                }
+                            }
+                        }
+                    }
+                }
+                if(flags == (board[yo][xo])) {
+                    for (let y = -1; y < 2; y++) {
+                        if(yo+y >= 0 && yo+y < dimension) {
+                            for (let x = -1; x < 2; x++) {
+                                if(xo+x >= 0 && xo+x < dimension) {
+                                    if(stat[yo+y][xo+x] === false){
+                                        reveal(xo+x, yo+y, false)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            checkWin()
+        }
+
+        function flag(x,y, override) {
+            if(stat[y][x] === false){
+                stat[y][x] = "flag"
+                updateFlags(1)
+                ctx.beginPath()
+                ctx.fillStyle="rgb(120,220,120)"
+                ctx.fillRect(
+                ((x/dimension)*minefield.width),
+                ((y/dimension)*minefield.width),
+                (minefield.width/dimension), 
+                (minefield.width/dimension)
+                );
+                drawGrid()
+                ctx.lineWidth = minefield.width/(dimension*10)
+                line(
+                    (.7+x)*(minefield.width/dimension),
+                    (.2+y)*(minefield.width/dimension),
+                    (.5+x)*(minefield.width/dimension),
+                    (.8+y)*(minefield.width/dimension),
+                    true
+                )
+                line(
+                    (.7+x)*(minefield.width/dimension),
+                    (.2+y)*(minefield.width/dimension),
+                    (.3+x)*(minefield.width/dimension),
+                    (.3+y)*(minefield.width/dimension),
+                    true
+                )
+                line(
+                    (.3+x)*(minefield.width/dimension),
+                    (.3+y)*(minefield.width/dimension),
+                    (.566+x)*(minefield.width/dimension),
+                    (.6+y)*(minefield.width/dimension),
+                    true
+                )
+                ctx.lineWidth = minefield.width/800
+
+            } else if (stat[y][x] === "flag") {
+                stat[y][x] = false
+                updateFlags((-1))
+                ctx.beginPath()
+                ctx.fillStyle="white"
+                ctx.fillRect(
+                ((x/dimension)*minefield.width),
+                ((y/dimension)*minefield.width),
+                (minefield.width/dimension), 
+                (minefield.width/dimension)
+                );
+                drawGrid()
+            }
+
+        }
+
+        function check(x, y) {
+            if(firstClick === true) {
+                startTime = Date.now()
+                propagate(x, y)
+                firstClick = false
+            }
+            reveal(x, y, true)
+            drawGrid()
+        }
+
+        function clickHandler(e) {
+            let rect = minefield.getBoundingClientRect();
+            let box = []
+            box[0] = Math.floor(((e.clientX - rect.left)/minefieldDim)*dimension)
+            box[1] = Math.floor(((e.clientY - rect.top)/minefieldDim)*dimension)
+            //console.log(`${e.button} @ ${box[0]},${box[1]}`)
+            switch (e.button) {
+                case 0:
+                    check(box[0], box[1])
+                    break;
+                case 1:
+                    break;
+                case 2:
+                    flag(box[0], box[1])
+                    break;
+                default:
+                    log.textContent = `Unknown button code: ${e.button}`;
+            }
+        }
+        
+        function tapHandler(e) {
+            if (boxX != undefined && boxY !=undefined) {
+                //console.log(`${e.key} @ ${boxX},${boxY}`)
+                switch (e.key) {
+                    case "z": 
+                        check(boxX, boxY)
+                        break;   
+                    case "x":
+                        flag(boxX, boxY)
+                        break;
+    
+                }
+            }
+        }
+
+
+        function lose() {
+            endGame()
+            stat.forEach((row, y) => {
+                row.forEach((item, x) => {
+                    if (item == false) {
+                        draw(x, y)
+                    } else if (item == "flag" && board[y][x] != 9) {
+                        draw(x, y)
+                    }
+                });
+            });
+            drawGrid()
+            ctx.fillStyle = 'rgb(240,20,20,0.7)'
+            ctx.fillRect(0, 0, minefield.width, minefield.width)
+            ctx.fillStyle = 'rgb(0,0,0,1)'
+            ctx.font = `bold ${.15*minefield.width}px Andale Mono`;
+            ctx.fillText("You lost.", .5*minefield.width, .35*minefield.width)
+            ctx.font = `bold ${.09*minefield.width}px Andale Mono`;
+            ctx.fillText(formatTimeElapsed(finalTime), .5*minefield.width, .5*minefield.width)
+            ctx.font = `bold ${.05*minefield.width}px Andale Mono`;
+            ctx.fillText("press [space] to try again.", .5*minefield.width, .6*minefield.width)
+        }
+        
+        function win() {
+            endGame()
+            ctx.fillStyle = 'rgb(120,220,120, 0.7)'
+            ctx.fillRect(0, 0, minefield.width, minefield.width)
+            ctx.fillStyle = 'rgb(0,0,0,1)'
+            ctx.font = `bold ${.15*minefield.width}px Andale Mono`;
+            ctx.fillText("You won!", .5*minefield.width, .35*minefield.width)
+            ctx.font = `bold ${.09*minefield.width}px Andale Mono`;
+            ctx.fillText(formatTimeElapsed(finalTime), .5*minefield.width, .5*minefield.width)
+            ctx.font = `bold ${.05*minefield.width}px Andale Mono`;
+            ctx.fillText("press [space] to try again.", .5*minefield.width, .6*minefield.width)
+            addTime(finalTime)
+        }
+
+        function checkWin() {
+            let complete
+            if(!gameOver) {
+                complete == true
+            } else {
+                return
+            }
+            complete = true
+            board.forEach((row, y) => {
+                row.forEach((item, x) => {
+                    if (item != 9 && stat[y][x] != true) {
+                        complete = false
+                    }
+                });
+            });
+            if(complete) {
+                board.forEach((row, y) => {
+                    row.forEach((item, x) => {
+                        if (item == 9 && stat[y][x] != "flag") {
+                            flag(x, y, true)
+                        }
+                    });
+                });
+                win()
+            }
+        }
+
+        function endGame() {
+            clearInterval(updateTime)
+            finalTime = Date.now() - startTime
+            gameOver = true
+            minefield.removeEventListener('mousedown', clickHandler);
+            window.removeEventListener('keydown', tapHandler);
+            document.getElementById("time").innerHTML = formatTimeElapsed(finalTime)
+        }
+
+        function updateFlags(n) {
+            flagCount += n 
+            flagCounter.innerHTML = `🏳 ${flagCount}/10`
+        }
+
+        function logBoard () {
+            for (j = 0; j < dimension; j++){
+                console.log(board[j])
+            }
+            for (j = 0; j < dimension; j++){
+                console.log(stat[j])
+            }
+        }
+
+        function addTime(time) {
+            if (leaderboard.length == 0) {
+                leaderboard.push(time)
+            } else {
+                leaderboard.push(time)
+                leaderboard.sort(function(a, b){return a-b});
+                if (leaderboard.length > 10) {
+                    leaderboard.length = 10
+                }
+            }
+               
+
+
+            localStorage.setItem('leaderboard', JSON.stringify(leaderboard))
+        }
+
+        minefield.addEventListener('mousedown', clickHandler)
+        minefield.addEventListener('mousemove', function(e) {
+            let rect = minefield.getBoundingClientRect();
+            let box = []
+            boxX = Math.floor(((e.clientX - rect.left)/minefieldDim)*dimension)
+            boxY = Math.floor(((e.clientY - rect.top)/minefieldDim)*dimension)
+        });
+        minefield.addEventListener('mouseleave', function(e) {
+            boxX = undefined
+            boxY = undefined
+        })
+        window.addEventListener('keydown', function(e) {
+            if(e.key == " "){
+                if(gameOver) {
+                window.location.reload()
+                } else {
+                    lose()
+                }
+            }
+        })
+        window.addEventListener('keydown', tapHandler, true)
+
+        const updateTime = setInterval(function() {
+            document.getElementById("time").innerHTML = formatTimeElapsed(Date.now() - startTime, true)
+        }, 1)
+    </script>
+</html>
