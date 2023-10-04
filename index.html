@@ -23,8 +23,58 @@
                 </td>
             </tr>
         </table>
+        <div id = "settings">
+            <div id = "container"></div> 
+            <button onclick="setToggle()"><p id = "btnx">x</p></button>
+        </div>
     </body>
     <style>
+        #btnx {
+            position: relative;
+            top:-1.6px;
+            padding: 0px;
+            margin: 0px;
+            font-weight: bolder;
+        }
+        button {
+            position: absolute;
+            left: calc(30% - 8px);
+            top: calc(25% - 8px);
+            line-height: 1em;
+            padding: 0px;
+            padding-top: -5px;
+            text-align: center;
+            display:block;
+            height: 25px;
+            width: 25px;
+            border-radius: 50%;
+            background-color: red;
+            border: 3px solid black;
+            cursor:pointer;
+        }
+        body {
+            margin: 0;
+        }
+        #settings {
+            position:absolute;
+            top: 0;
+            left:0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,.2);
+            display: none;
+        }
+        #container {
+            position: fixed;
+            left: 30%;
+            top: 25%;
+            width: 40%;
+            height: 50%;
+            min-height: 250px;
+            border:4px solid #000000;
+            border-radius: 8px;
+            background: rgb(255,255,255);
+        }
         td {
             vertical-align: top;
         }
@@ -47,8 +97,9 @@
     </style>
     <script>
         const minefield = document.getElementById("minefield");
-        const minefieldDim = (window.innerHeight - 20) 
+        const minefieldDim = (window.innerHeight-14) 
         const flagCounter = document.getElementById("flags")
+        const settings = document.getElementById("settings");
 
         var ctx = minefield.getContext("2d");
         var firstClick = true
@@ -60,58 +111,10 @@
         var cursorY
         var boxX
         var boxY
-        var gameOver = false
+        var game = "pre"
         var startTime = 0
         var flagCount = 0
         var finalTime = 0 
-
-        var canvas = document.createElement('canvas');
-        canvas.width = 32;canvas.height = 32;
-        var fav = canvas.getContext('2d');
-        var img = new Image();
-        img.src = '/favicon.ico';
-        fav.drawImage(img, 0, 0);
-        fav.lineWidth = 2.7
-        fav.beginPath()
-        fav.fillStyle = 'red'
-        fav.strokeStyle = 'red'
-        fav.arc(
-                    (.5)*(32),
-                    (.5)*(32),
-                    .4*(32),
-                    0,
-                    2 * Math.PI
-                )
-        fav.stroke()
-        fav.fill()
-        fav.closePath()
-        fav.beginPath()
-        fav.strokeStyle = 'black'
-        fav.arc(
-                    (.5)*(32),
-                    (.5)*(32),
-                    .2*(32),
-                    0,
-                    2 * Math.PI
-                )
-        fav.stroke()
-        for (let i=0; i<6; i++) {
-            line(
-                (.2*Math.cos((Math.PI/6)+i*(Math.PI/3))+.5)*(32),
-                (.2*Math.sin((Math.PI/6)+i*(Math.PI/3))+.5)*(32),
-                (.3*Math.cos((Math.PI/6)+i*(Math.PI/3))+.5)*(32),
-                (.3*Math.sin((Math.PI/6)+i*(Math.PI/3))+.5)*(32),
-                true,
-                fav
-            )
-        }
-        fav.closePath()
-
-        var link = document.createElement('link');
-        link.type = 'image/x-icon';
-        link.rel = 'shortcut icon';
-        link.href = canvas.toDataURL("image/x-icon");
-        document.getElementsByTagName('head')[0].appendChild(link);
 
         minefield.style.height = minefieldDim.toString()+"px"
         minefield.style.width = minefieldDim.toString()+"px"
@@ -124,8 +127,11 @@
 
         var leaderboard = JSON.parse(localStorage.getItem('leaderboard'))
 
+        favicon()
 
         drawGrid()
+        settings.style.display = "none"
+
 
         for (i = 0; i < dimension; i++){
             let line = []     
@@ -180,6 +186,57 @@
             return formattedTime;
         }
 
+        function favicon() {
+            var canvas = document.createElement('canvas');
+            canvas.width = 32;canvas.height = 32;
+            var fav = canvas.getContext('2d');
+            var img = new Image();
+            img.src = '/favicon.ico';
+
+            fav.drawImage(img, 0, 0);
+            fav.lineWidth = 2.7
+            fav.beginPath()
+            fav.fillStyle = 'red'
+            fav.strokeStyle = 'red'
+            fav.arc(
+                        (.5)*(32),
+                        (.5)*(32),
+                        .4*(32),
+                        0,
+                        2 * Math.PI
+                    )
+            fav.stroke()
+            fav.fill()
+            fav.closePath()
+            fav.beginPath()
+            fav.strokeStyle = 'black'
+            fav.arc(
+                        (.5)*(32),
+                        (.5)*(32),
+                        .2*(32),
+                        0,
+                        2 * Math.PI
+                    )
+            fav.stroke()
+            for (let i=0; i<6; i++) {
+                line(
+                    (.2*Math.cos((Math.PI/6)+i*(Math.PI/3))+.5)*(32),
+                    (.2*Math.sin((Math.PI/6)+i*(Math.PI/3))+.5)*(32),
+                    (.3*Math.cos((Math.PI/6)+i*(Math.PI/3))+.5)*(32),
+                    (.3*Math.sin((Math.PI/6)+i*(Math.PI/3))+.5)*(32),
+                    true,
+                    fav
+                )
+            }
+            fav.closePath()
+
+            var link = document.createElement('link');
+            link.type = 'image/x-icon';
+            link.rel = 'shortcut icon';
+            link.href = canvas.toDataURL("image/x-icon");
+            document.getElementsByTagName('head')[0].appendChild(link);
+        }
+
         function propagate(xo,yo) {
             if((dimension*dimension) - (9 + mineCount) < 0) {
                 mineCount = ((dimension*dimension) - 9)
@@ -213,8 +270,8 @@
                     }
                 }
             }
+            game = "during"
         }
-
 
         /**
          * @param {num} x1
@@ -235,15 +292,14 @@
         }
 
         function drawGrid(){
+            ctx.lineWidth = 1.5
             for (i = 1; i < dimension; i++) {
                 let width = minefield.width
                 let size = width/dimension
-                // console.log(i*size)
-                // console.log(width)
-                line(i*size, 0, i*size, width, 1)
-                line(0, i*size, width, i*size, 1)
-                line(i*size, 0, i*size, width, 1)
-                line(0, i*size, width, i*size, 1)
+                line(i*size, 0, i*size, width)
+                line(0, i*size, width, i*size)
+                line(i*size, 0, i*size, width)
+                line(0, i*size, width, i*size)
             }
         }
 
@@ -295,7 +351,6 @@
         }
 
         function reveal(xo, yo, click) {
-            console.log(`reveal: ${xo}, ${yo} - ${click}`)
             if(stat[yo][xo] === false){
                 draw(xo, yo)
             } else if (stat[yo][xo] == "flag" && click === false){
@@ -415,7 +470,6 @@
             let box = []
             box[0] = Math.floor(((e.clientX - rect.left)/minefieldDim)*dimension)
             box[1] = Math.floor(((e.clientY - rect.top)/minefieldDim)*dimension)
-            //console.log(`${e.button} @ ${box[0]},${box[1]}`)
             switch (e.button) {
                 case 0:
                     check(box[0], box[1])
@@ -432,11 +486,10 @@
         
         function tapHandler(e) {
             if (boxX != undefined && boxY !=undefined) {
-                //console.log(`${e.key} @ ${boxX},${boxY}`)
                 switch (e.key) {
                     case "z": 
                         check(boxX, boxY)
-                        break;   
+                        break;
                     case "x":
                         flag(boxX, boxY)
                         break;
@@ -445,6 +498,19 @@
             }
         }
 
+        function win() {
+            endGame()
+            ctx.fillStyle = 'rgb(120,220,120, 0.7)'
+            ctx.fillRect(0, 0, minefield.width, minefield.width)
+            ctx.fillStyle = 'rgb(0,0,0,1)'
+            ctx.font = `bold ${.15*minefield.width}px Andale Mono`;
+            ctx.fillText("You won!", .5*minefield.width, .35*minefield.width)
+            ctx.font = `bold ${.09*minefield.width}px Andale Mono`;
+            ctx.fillText(formatTimeElapsed(finalTime), .5*minefield.width, .5*minefield.width)
+            ctx.font = `bold ${.05*minefield.width}px Andale Mono`;
+            ctx.fillText("press [space] to try again.", .5*minefield.width, .6*minefield.width)
+            addTime(finalTime)
+        }
 
         function lose() {
             endGame()
@@ -462,30 +528,35 @@
             ctx.fillRect(0, 0, minefield.width, minefield.width)
             ctx.fillStyle = 'rgb(0,0,0,1)'
             ctx.font = `bold ${.15*minefield.width}px Andale Mono`;
-            ctx.fillText("You lost.", .5*minefield.width, .35*minefield.width)
-            ctx.font = `bold ${.09*minefield.width}px Andale Mono`;
-            ctx.fillText(formatTimeElapsed(finalTime), .5*minefield.width, .5*minefield.width)
+            ctx.fillText("You lost.", .5*minefield.width, .45*minefield.width)
             ctx.font = `bold ${.05*minefield.width}px Andale Mono`;
-            ctx.fillText("press [space] to try again.", .5*minefield.width, .6*minefield.width)
+            ctx.fillText("press [space] to try again.", .5*minefield.width, .55*minefield.width)
         }
         
-        function win() {
+        function abort() {
             endGame()
-            ctx.fillStyle = 'rgb(120,220,120, 0.7)'
+            stat.forEach((row, y) => {
+                row.forEach((item, x) => {
+                    if (item == false) {
+                        draw(x, y)
+                    } else if (item == "flag" && board[y][x] != 9) {
+                        draw(x, y)
+                    }
+                });
+            });
+            drawGrid()
+            ctx.fillStyle = 'rgb(150,150,150,0.7)'
             ctx.fillRect(0, 0, minefield.width, minefield.width)
             ctx.fillStyle = 'rgb(0,0,0,1)'
-            ctx.font = `bold ${.15*minefield.width}px Andale Mono`;
-            ctx.fillText("You won!", .5*minefield.width, .35*minefield.width)
-            ctx.font = `bold ${.09*minefield.width}px Andale Mono`;
-            ctx.fillText(formatTimeElapsed(finalTime), .5*minefield.width, .5*minefield.width)
+            ctx.font = `bold ${.12*minefield.width}px Andale Mono`;
+            ctx.fillText("Game aborted.", .5*minefield.width, .45*minefield.width)
             ctx.font = `bold ${.05*minefield.width}px Andale Mono`;
-            ctx.fillText("press [space] to try again.", .5*minefield.width, .6*minefield.width)
-            addTime(finalTime)
+            ctx.fillText("press [space] to try again.", .5*minefield.width, .55*minefield.width)
         }
 
         function checkWin() {
             let complete
-            if(!gameOver) {
+            if(game == "during") {
                 complete == true
             } else {
                 return
@@ -513,7 +584,7 @@
         function endGame() {
             clearInterval(updateTime)
             finalTime = Date.now() - startTime
-            gameOver = true
+            game = "over"
             minefield.removeEventListener('mousedown', clickHandler);
             window.removeEventListener('keydown', tapHandler);
             document.getElementById("time").innerHTML = formatTimeElapsed(finalTime)
@@ -549,6 +620,14 @@
             localStorage.setItem('leaderboard', JSON.stringify(leaderboard))
         }
 
+        function setToggle() {
+            if(settings.style.display == "none" ){
+                settings.style.display = "block"
+            } else {
+                settings.style.display = "none"
+            }
+        }
+
         minefield.addEventListener('mousedown', clickHandler)
         minefield.addEventListener('mousemove', function(e) {
             let rect = minefield.getBoundingClientRect();
@@ -561,12 +640,18 @@
             boxY = undefined
         })
         window.addEventListener('keydown', function(e) {
-            if(e.key == " "){
-                if(gameOver) {
-                window.location.reload()
-                } else {
-                    lose()
-                }
+            console.log(e.key)
+            switch (e.key) {
+                case " ":
+                    if(game == "over") {
+                    window.location.reload()
+                    } else if (game == "during") {
+                        abort()
+                    }
+                    break;
+                case "Escape":
+                    setToggle()
+                    break;
             }
         })
         window.addEventListener('keydown', tapHandler, true)
