@@ -14,7 +14,7 @@
                 <td width="100%">
                     <div id = "info" class = "item">
                         <p id = "time">00:00.00</p>
-                        <p id = "flags">🏳 0/10</p>
+                        <p id = "flags">🏳</p>
                     </div>
                 </td>
                 <td>
@@ -24,8 +24,21 @@
             </tr>
         </table>
         <div id = "settings">
-            <div id = "container"></div> 
-            <button onclick="setToggle()"><p id = "btnx">x</p></button>
+            <div id = "container">
+                <p class = setting>
+                    <input type="radio" id="count" name="mines" onclick="radio(true)"> Mine #: 
+                    <input type="number" size=6 min=0 value =10>
+                </p>
+                <p class = setting>
+                    <input type="radio" id="percent" name="mines" onclick="radio(false)"> Mine %: 
+                    <input type="number" size=6 max=100 min=0 value =15> %
+                </p>
+                <p class = setting>
+                    Minefield size: 
+                    <input id = "dimInput" type="number" size=6 max=100 min=0 value =8>
+                </p>
+                <button onclick="setToggle()"><p id = "btnx">x</p></button>
+            </div> 
         </div>
     </body>
     <style>
@@ -38,8 +51,8 @@
         }
         button {
             position: absolute;
-            left: calc(30% - 8px);
-            top: calc(25% - 8px);
+            left: -12px;
+            top: -12px;
             line-height: 1em;
             padding: 0px;
             padding-top: -5px;
@@ -74,6 +87,7 @@
             border:4px solid #000000;
             border-radius: 8px;
             background: rgb(255,255,255);
+            padding: 8px;
         }
         td {
             vertical-align: top;
@@ -93,6 +107,10 @@
         p {
             font-family: Andale Mono, AndaleMono, monospace;
         }
+        .setting {
+            margin: 8px;
+        }
+
 
     </style>
     <script>
@@ -104,7 +122,7 @@
         var ctx = minefield.getContext("2d");
         var firstClick = true
         var mineCount = 10
-        var dimension = 8
+        var dimension = document.getElementById("dimInput").value
         var board = []
         var stat = []
         var cursorX
@@ -124,14 +142,29 @@
         if(localStorage.getItem('leaderboard') === null) {
             localStorage.setItem('leaderboard', JSON.stringify([]))
         }
-
         var leaderboard = JSON.parse(localStorage.getItem('leaderboard'))
 
-        favicon()
+        let checks = false
+        document.getElementsByName("mines").forEach(element => {
+        checks = (!checks || element.checked) ? true : false
+        })
+        if(!checks) {
+            document.getElementById("count").checked = true
+            radio(true)
+        } else {
+            radio(document.getElementById("count").checked)
+        }
 
+        if(document.getElementById("count").checked) {
+            mineCount = parseInt(document.getElementById("count").parentElement.children[1].value)
+        } else if (document.getElementById("percent").checked) {
+            mineCount = Math.round((dimension*dimension) * (parseInt(document.getElementById("percent").parentElement.children[1].value) / 100))
+        }
+        flagCounter.innerHTML = `🏳 0/${mineCount}`
+
+        favicon()
         drawGrid()
         settings.style.display = "none"
-
 
         for (i = 0; i < dimension; i++){
             let line = []     
@@ -235,6 +268,11 @@
             link.rel = 'shortcut icon';
             link.href = canvas.toDataURL("image/x-icon");
             document.getElementsByTagName('head')[0].appendChild(link);
+        }
+
+        function radio(count) {
+            document.getElementById("count").parentElement.children[1].disabled = !count
+            document.getElementById("percent").parentElement.children[1].disabled = count
         }
 
         function propagate(xo,yo) {
@@ -592,7 +630,7 @@
 
         function updateFlags(n) {
             flagCount += n 
-            flagCounter.innerHTML = `🏳 ${flagCount}/10`
+            flagCounter.innerHTML = `🏳 ${flagCount}/${mineCount}`
         }
 
         function logBoard () {
@@ -624,7 +662,7 @@
             if(settings.style.display == "none" ){
                 settings.style.display = "block"
             } else {
-                settings.style.display = "none"
+                window.location.reload()
             }
         }
 
