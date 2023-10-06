@@ -168,7 +168,6 @@
         const minefieldDim = (window.innerHeight-14) 
         const flagCounter = document.getElementById("flags")
         const settings = document.getElementById("settings");
-
         var ctx = minefield.getContext("2d");
         var firstClick = true
         var mineCount = 10
@@ -189,8 +188,25 @@
         window.focus();
         minefield.oncontextmenu = function(e) { e.preventDefault(); e.stopPropagation(); }
 
-        if(localStorage.getItem('leaderboard') === null) {
-            localStorage.setItem('leaderboard', JSON.stringify([]))
+        if(localStorage.getItem('config') != null) {
+            if(JSON.parse(localStorage.getItem('config')).constructor != Object) {
+                localStorage.setItem('config', JSON.stringify({}))
+            }
+        } else {
+            localStorage.setItem('config', JSON.stringify({
+                "mineCount": 10,
+                "minePercent": 15,
+                "count": true,
+                "size":8
+            }))
+        }
+
+        if(localStorage.getItem('leaderboard') != null) {
+            if(JSON.parse(localStorage.getItem('leaderboard')).constructor != Object) {
+                localStorage.setItem('leaderboard', JSON.stringify({}))
+            }
+        } else {
+            localStorage.setItem('leaderboard', JSON.stringify({}))
         }
         var leaderboard = JSON.parse(localStorage.getItem('leaderboard'))
 
@@ -232,12 +248,16 @@
             stat.push(line)
         }
 
-        leaderboard.forEach(element => {
-            p = document.createElement('p')
-            p.innerHTML = formatTimeElapsed(element)
-            p.class = "times"
-            document.getElementById('leaderboard').append(p)
-        });
+        if(leaderboard[currentLb()] == undefined) {
+            leaderboard[currentLb()] = []
+        }
+        leaderboard[currentLb()].slice(0,10).forEach(element => {
+        p = document.createElement('p')
+        p.innerHTML = formatTimeElapsed(element)
+        p.class = "times"
+        document.getElementById('leaderboard').append(p)
+        })
+        
 
         function randNum(lim) {
             return Math.floor((Math.random()*lim))
@@ -255,6 +275,10 @@
                 }
             });
             return contains
+        }
+
+        function currentLb() {
+            return `${dimension}x${mineCount}`
         }
 
         function formatTimeElapsed(time, timer) {
@@ -693,18 +717,11 @@
         }
 
         function addTime(time) {
-            if (leaderboard.length == 0) {
-                leaderboard.push(time)
-            } else {
-                leaderboard.push(time)
-                leaderboard.sort(function(a, b){return a-b});
-                if (leaderboard.length > 10) {
-                    leaderboard.length = 10
-                }
+            leaderboard[currentLb()].push(time)
+            leaderboard[currentLb()].sort(function(a, b){return a-b});
+            if (leaderboard[currentLb()].length > 100) {
+                leaderboard[currentLb()].length = 100
             }
-               
-
-
             localStorage.setItem('leaderboard', JSON.stringify(leaderboard))
         }
 
@@ -728,7 +745,7 @@
             boxY = undefined
         })
         window.addEventListener('keydown', function(e) {
-            console.log(e.key)
+            //console.log(e.key)
             switch (e.key) {
                 case " ":
                     if(game == "over") {
