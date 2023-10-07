@@ -165,9 +165,9 @@
     </style>
     <script>
         const minefield = document.getElementById("minefield");
-        const minefieldDim = (window.innerHeight-14) 
         const flagCounter = document.getElementById("flags")
         const settings = document.getElementById("settings");
+        var minefieldDim = (window.innerHeight-14)
         var ctx = minefield.getContext("2d");
         var firstClick = true
         var mineCount = 10
@@ -197,9 +197,10 @@
                 "mineCount": 10,
                 "minePercent": 15,
                 "count": true,
-                "size":8
+                "size": 8
             }))
         }
+        var config = JSON.parse(localStorage.getItem('config'))
 
         if(localStorage.getItem('leaderboard') != null) {
             if(JSON.parse(localStorage.getItem('leaderboard')).constructor != Object) {
@@ -210,54 +211,68 @@
         }
         var leaderboard = JSON.parse(localStorage.getItem('leaderboard'))
 
-        let checks = false
-        document.getElementsByName("mines").forEach(element => {
-        checks = (!checks || element.checked) ? true : false
-        })
-        if(!checks) {
-            document.getElementById("count").checked = true
-            radio(true)
-        } else {
-            radio(document.getElementById("count").checked)
-        }
+
+        radio(config['count'])
+        // let checks = false
+        // document.getElementsByName("mines").forEach(element => {
+        // checks = (!checks || element.checked) ? true : false
+        // })
+        // if(!checks) {
+        //     document.getElementById("count").checked = true
+        //     radio(true)
+        // } else {
+        //     radio(document.getElementById("count").checked)
+        // }
 
         if(document.getElementById("count").checked) {
-            mineCount = parseInt(document.getElementById("count").parentElement.children[1].value)
+            config['mineCount'] = parseInt(document.getElementById("count").parentElement.children[1].value)
         } else if (document.getElementById("percent").checked) {
-            mineCount = Math.round((dimension*dimension) * (parseInt(document.getElementById("percent").parentElement.children[1].value) / 100))
+            config['mineCount'] = Math.round((Math.pow(config['size'], 2)) * (parseInt(document.getElementById("percent").parentElement.children[1].value) / 100))
         }
-        flagCounter.innerHTML = `🏳 0/${mineCount}`
+        flagCounter.innerHTML = `🏳 0/${config['mineCount']}`
 
         favicon()
-        drawGrid()
         settings.style.display = "none"
+        reset()
 
-        for (i = 0; i < dimension; i++){
-            let line = []     
-            for (j = 0; j < dimension; j++){
-                line.push(0)
+        function reset() {
+            ctx.clearRect(0, 0, minefield.width, minefield.height);
+            game = "pre"
+            firstClick = true
+            scalar = minefield.width/config['size']
+
+            if(leaderboard[currentLb()] == undefined) {
+                leaderboard[currentLb()] = []
             }
-            board.push(line)
-        }
 
-        for (i = 0; i < dimension; i++){
-            let line = []     
-            for (j = 0; j < dimension; j++){
-                line.push(false)
+            document.getElementById('leaderboard').innerHTML = ""
+            leaderboard[currentLb()].slice(0,10).forEach(element => {
+                p = document.createElement('p')
+                p.innerHTML = formatTimeElapsed(element)
+                p.class = "times"
+                document.getElementById('leaderboard').append(p)
+            })
+
+            board = []
+            for (i = 0; i < config['size']; i++){
+                let line = []     
+                for (j = 0; j < config['size']; j++){
+                    line.push(0)
+                }
+                board.push(line)
             }
-            stat.push(line)
-        }
 
-        if(leaderboard[currentLb()] == undefined) {
-            leaderboard[currentLb()] = []
+            stat = []
+            for (i = 0; i < config['size']; i++){
+                let line = []     
+                for (j = 0; j < config['size']; j++){
+                    line.push(false)
+                }
+                stat.push(line)
+            }
+
+            drawGrid()
         }
-        leaderboard[currentLb()].slice(0,10).forEach(element => {
-        p = document.createElement('p')
-        p.innerHTML = formatTimeElapsed(element)
-        p.class = "times"
-        document.getElementById('leaderboard').append(p)
-        })
-        
 
         function randNum(lim) {
             return Math.floor((Math.random()*lim))
@@ -278,7 +293,7 @@
         }
 
         function currentLb() {
-            return `${dimension}x${mineCount}`
+            return `${config['size']}x${config['mineCount']}`
         }
 
         function formatTimeElapsed(time, timer) {
@@ -350,30 +365,30 @@
         }
 
         function propagate(xo,yo) {
-            if((dimension*dimension) - (9 + mineCount) < 0) {
-                mineCount = ((dimension*dimension) - 9)
+            if((Math.pow(config['size'], 2)) - (9 + config['mineCount']) < 0) {
+                config['mineCount'] -= 9
             }
-            for (i = 0; i <= (mineCount-1); i++){
-                let box = [randNum(dimension), randNum(dimension)]
+            for (i = 0; i <= (config['mineCount']-1); i++){
+                let box = [randNum(config['size']), randNum(config['size'])]
                 let range = []
                 let clear = true
                 for (let y = -1; y < 2; y++) {
-                    if(yo+y >= 0 && yo+y < dimension) {
+                    if(yo+y >= 0 && yo+y < config['size']) {
                         for (let x = -1; x < 2; x++) {
-                            if(xo+x >= 0 && xo+x < dimension) {
+                            if(xo+x >= 0 && xo+x < config['size']) {
                                 range.push([(xo+x), (yo+y)])
                             }
                         }
                     }
                 }
                 while(board[box[1]][box[0]] == 9 || containsList(range, [(box[0]), (box[1])])) {
-                    box = [randNum(dimension), randNum(dimension)]
+                    box = [randNum(config['size']), randNum(config['size'])]
                 }
                 board[box[1]][box[0]] = 9
                 for (let y = -1; y < 2; y++) {
-                    if(box[1]+y >= 0 && box[1]+y <= (dimension-1)) {
+                    if(box[1]+y >= 0 && box[1]+y <= (config['size']-1)) {
                         for (let x = -1; x < 2; x++) {
-                            if(box[0]+x >= 0 && box[0]+x < dimension) {
+                            if(box[0]+x >= 0 && box[0]+x < config['size']) {
                                 if(board[box[1]+y][box[0]+x] != 9) {
                                     board[box[1]+y][box[0]+x]++
                                 }
@@ -405,9 +420,9 @@
 
         function drawGrid(){
             ctx.lineWidth = 1.5
-            for (i = 1; i < dimension; i++) {
+            for (i = 1; i < config['size']; i++) {
                 let width = minefield.width
-                let size = width/dimension
+                let size = width/config['size']
                 line(i*size, 0, i*size, width)
                 line(0, i*size, width, i*size)
                 line(i*size, 0, i*size, width)
@@ -424,36 +439,36 @@
                 ${220-((180/5)*board[y][x])}
                 )`
             ctx.fillRect(
-                ((x/dimension)*minefield.width), 
-                ((y/dimension)*minefield.width), 
-                (minefield.width/dimension), 
-                (minefield.width/dimension)
+                x*scalar, 
+                y*scalar, 
+                (scalar), 
+                (scalar)
                 );
             ctx.textAlign = "center"
-            ctx.font = `bold ${(.8)*(minefield.width/dimension)}px "Andale Mono", monospace`;
+            ctx.font = `bold ${(.8)*(scalar)}px "Andale Mono", monospace`;
             ctx.fillStyle="black"
             if(board[y][x] != 9 && board[y][x] != 0) {
                 ctx.fillText(
                     board[y][x],
-                    (.5+x)*(minefield.width/dimension),
-                    (.8+y)*(minefield.width/dimension)
+                    (.5+x)*(scalar),
+                    (.8+y)*(scalar)
                     )
             } else if (board[y][x] != 0) {
-                ctx.lineWidth = minefield.width/(dimension*10)
+                ctx.lineWidth = scalar/10
                 ctx.arc(
-                    (.5+x)*(minefield.width/dimension),
-                    (.5+y)*(minefield.width/dimension),
-                    .2*(minefield.width/dimension),
+                    (.5+x)*(scalar),
+                    (.5+y)*(scalar),
+                    .2*(scalar),
                     0,
                     2 * Math.PI
                 )
                 ctx.stroke(); 
                 for (let i=0; i<6; i++) {
                     line(
-                        (.2*Math.cos((Math.PI/6)+i*(Math.PI/3))+x+.5)*(minefield.width/dimension),
-                        (.2*Math.sin((Math.PI/6)+i*(Math.PI/3))+y+.5)*(minefield.width/dimension),
-                        (.3*Math.cos((Math.PI/6)+i*(Math.PI/3))+x+.5)*(minefield.width/dimension),
-                        (.3*Math.sin((Math.PI/6)+i*(Math.PI/3))+y+.5)*(minefield.width/dimension),
+                        (.2*Math.cos((Math.PI/6)+i*(Math.PI/3))+x+.5)*(scalar),
+                        (.2*Math.sin((Math.PI/6)+i*(Math.PI/3))+y+.5)*(scalar),
+                        (.3*Math.cos((Math.PI/6)+i*(Math.PI/3))+x+.5)*(scalar),
+                        (.3*Math.sin((Math.PI/6)+i*(Math.PI/3))+y+.5)*(scalar),
                         true
                     )
                 }
@@ -474,9 +489,9 @@
             }
             if (board[yo][xo] == 0) {
                 for (let y = -1; y < 2; y++) {
-                    if(yo+y >= 0 && yo+y < dimension) {
+                    if(yo+y >= 0 && yo+y < config['size']) {
                         for (let x = -1; x < 2; x++) {
-                            if(xo+x >= 0 && xo+x < dimension) {
+                            if(xo+x >= 0 && xo+x < config['size']) {
                                 if(stat[yo+y][xo+x] === false || stat[yo+y][xo+x] === "flag"){
                                     reveal(xo+x, yo+y, false)
                                 }
@@ -487,9 +502,9 @@
             } else if (board[yo][xo] != "m" && click) {
                 let flags = 0
                 for (let y = -1; y < 2; y++) {
-                    if(yo+y >= 0 && yo+y < dimension) {
+                    if(yo+y >= 0 && yo+y < config['size']) {
                         for (let x = -1; x < 2; x++) {
-                            if(xo+x >= 0 && xo+x < dimension) {
+                            if(xo+x >= 0 && xo+x < config['size']) {
                                 if(stat[yo+y][xo+x] === "flag"){
                                     flags++
                                 }
@@ -499,9 +514,9 @@
                 }
                 if(flags == (board[yo][xo])) {
                     for (let y = -1; y < 2; y++) {
-                        if(yo+y >= 0 && yo+y < dimension) {
+                        if(yo+y >= 0 && yo+y < config['size']) {
                             for (let x = -1; x < 2; x++) {
-                                if(xo+x >= 0 && xo+x < dimension) {
+                                if(xo+x >= 0 && xo+x < config['size']) {
                                     if(stat[yo+y][xo+x] === false){
                                         reveal(xo+x, yo+y, false)
                                     }
@@ -521,32 +536,32 @@
                 ctx.beginPath()
                 ctx.fillStyle="rgb(120,220,120)"
                 ctx.fillRect(
-                ((x/dimension)*minefield.width),
-                ((y/dimension)*minefield.width),
-                (minefield.width/dimension), 
-                (minefield.width/dimension)
+                ((x/config['size'])*minefield.width),
+                ((y/config['size'])*minefield.width),
+                (scalar), 
+                (scalar)
                 );
                 drawGrid()
-                ctx.lineWidth = minefield.width/(dimension*10)
+                ctx.lineWidth = minefield.width/(config['size']*10)
                 line(
-                    (.7+x)*(minefield.width/dimension),
-                    (.2+y)*(minefield.width/dimension),
-                    (.5+x)*(minefield.width/dimension),
-                    (.8+y)*(minefield.width/dimension),
+                    (.7+x)*(scalar),
+                    (.2+y)*(scalar),
+                    (.5+x)*(scalar),
+                    (.8+y)*(scalar),
                     true
                 )
                 line(
-                    (.7+x)*(minefield.width/dimension),
-                    (.2+y)*(minefield.width/dimension),
-                    (.3+x)*(minefield.width/dimension),
-                    (.3+y)*(minefield.width/dimension),
+                    (.7+x)*(scalar),
+                    (.2+y)*(scalar),
+                    (.3+x)*(scalar),
+                    (.3+y)*(scalar),
                     true
                 )
                 line(
-                    (.3+x)*(minefield.width/dimension),
-                    (.3+y)*(minefield.width/dimension),
-                    (.566+x)*(minefield.width/dimension),
-                    (.6+y)*(minefield.width/dimension),
+                    (.3+x)*(scalar),
+                    (.3+y)*(scalar),
+                    (.566+x)*(scalar),
+                    (.6+y)*(scalar),
                     true
                 )
                 ctx.lineWidth = minefield.width/800
@@ -557,10 +572,10 @@
                 ctx.beginPath()
                 ctx.fillStyle="white"
                 ctx.fillRect(
-                ((x/dimension)*minefield.width),
-                ((y/dimension)*minefield.width),
-                (minefield.width/dimension), 
-                (minefield.width/dimension)
+                x*scalar,
+                y*scalar,
+                scalar, 
+                scalar
                 );
                 drawGrid()
             }
@@ -578,10 +593,11 @@
         }
 
         function clickHandler(e) {
+            if(game == "over") {return}
             let rect = minefield.getBoundingClientRect();
             let box = []
-            box[0] = Math.floor(((e.clientX - rect.left)/minefieldDim)*dimension)
-            box[1] = Math.floor(((e.clientY - rect.top)/minefieldDim)*dimension)
+            box[0] = Math.floor(((e.clientX - rect.left)/minefieldDim)*config['size'])
+            box[1] = Math.floor(((e.clientY - rect.top)/minefieldDim)*config['size'])
             switch (e.button) {
                 case 0:
                     check(box[0], box[1])
@@ -597,6 +613,7 @@
         }
         
         function tapHandler(e) {
+            if(game == "over") {return}
             if (boxX != undefined && boxY !=undefined) {
                 switch (e.key) {
                     case "z": 
@@ -625,6 +642,8 @@
         }
 
         function lose() {
+            console.log(game)
+            if(game == "over") {return}
             endGame()
             stat.forEach((row, y) => {
                 row.forEach((item, x) => {
@@ -697,21 +716,19 @@
             clearInterval(updateTime)
             finalTime = Date.now() - startTime
             game = "over"
-            minefield.removeEventListener('mousedown', clickHandler);
-            window.removeEventListener('keydown', tapHandler);
             document.getElementById("time").innerHTML = formatTimeElapsed(finalTime)
         }
 
         function updateFlags(n) {
             flagCount += n 
-            flagCounter.innerHTML = `🏳 ${flagCount}/${mineCount}`
+            flagCounter.innerHTML = `🏳 ${flagCount}/${config['mineCount']}`
         }
 
         function logBoard () {
-            for (j = 0; j < dimension; j++){
+            for (j = 0; j < config['size']; j++){
                 console.log(board[j])
             }
-            for (j = 0; j < dimension; j++){
+            for (j = 0; j < config['size']; j++){
                 console.log(stat[j])
             }
         }
@@ -729,7 +746,8 @@
             if(settings.style.display == "none" ){
                 settings.style.display = "block"
             } else {
-                window.location.reload()
+                settings.style.display = "none"
+                reset()
             }
         }
 
@@ -737,8 +755,8 @@
         minefield.addEventListener('mousemove', function(e) {
             let rect = minefield.getBoundingClientRect();
             let box = []
-            boxX = Math.floor(((e.clientX - rect.left)/minefieldDim)*dimension)
-            boxY = Math.floor(((e.clientY - rect.top)/minefieldDim)*dimension)
+            boxX = Math.floor(((e.clientX - rect.left)/minefieldDim)*config['size'])
+            boxY = Math.floor(((e.clientY - rect.top)/minefieldDim)*config['size'])
         });
         minefield.addEventListener('mouseleave', function(e) {
             boxX = undefined
@@ -749,7 +767,7 @@
             switch (e.key) {
                 case " ":
                     if(game == "over") {
-                    window.location.reload()
+                        reset()
                     } else if (game == "during") {
                         abort()
                     }
@@ -760,6 +778,11 @@
             }
         })
         window.addEventListener('keydown', tapHandler, true)
+        addEventListener("resize", function(e) {
+            minefieldDim = (window.innerHeight-14)
+            minefield.style.height = minefieldDim.toString()+"px"
+            minefield.style.width = minefieldDim.toString()+"px"
+        });
 
         const updateTime = setInterval(function() {
             document.getElementById("time").innerHTML = formatTimeElapsed(Date.now() - startTime, true)
