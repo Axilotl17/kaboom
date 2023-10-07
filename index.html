@@ -179,9 +179,10 @@
         var boxX
         var boxY
         var game = "pre"
-        var startTime = 0
         var flagCount = 0
-        var finalTime = 0 
+        var startTime = 0
+        var finalTime = 0
+        var updateTime 
 
         minefield.style.height = minefieldDim.toString()+"px"
         minefield.style.width = minefieldDim.toString()+"px"
@@ -235,9 +236,8 @@
         settings.style.display = "none"
         reset()
 
-        function reset() {
+        function reset() {      
             ctx.clearRect(0, 0, minefield.width, minefield.height);
-            game = "pre"
             firstClick = true
             scalar = minefield.width/config['size']
 
@@ -272,6 +272,10 @@
             }
 
             drawGrid()
+            document.getElementById("time").innerHTML = formatTimeElapsed(0)
+            flagCount = 0
+            flagCounter.innerHTML = `🏳 ${flagCount}/${config['mineCount']}`
+            game = "pre"
         }
 
         function randNum(lim) {
@@ -586,6 +590,9 @@
             if(firstClick === true) {
                 startTime = Date.now()
                 propagate(x, y)
+                updateTime = setInterval(function() {
+                    document.getElementById("time").innerHTML = formatTimeElapsed(Date.now() - startTime, true)
+                }, 1)
                 firstClick = false
             }
             reveal(x, y, true)
@@ -783,9 +790,5 @@
             minefield.style.height = minefieldDim.toString()+"px"
             minefield.style.width = minefieldDim.toString()+"px"
         });
-
-        const updateTime = setInterval(function() {
-            document.getElementById("time").innerHTML = formatTimeElapsed(Date.now() - startTime, true)
-        }, 1)
     </script>
 </html>
