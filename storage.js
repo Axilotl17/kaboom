@@ -1,6 +1,3 @@
-//global vars
-var config = JSON.parse(localStorage.getItem('config'))
-var leaderboard = JSON.parse(localStorage.getItem('leaderboard'))
 
 //fix empty config
 if(localStorage.getItem('config') != null) {
@@ -17,6 +14,10 @@ if(localStorage.getItem('config') != null) {
     }))
 }
 
+//global vars
+var config = JSON.parse(localStorage.getItem('config'))
+var leaderboard = JSON.parse(localStorage.getItem('leaderboard'))
+
 //fix empty leaderboard
 if(localStorage.getItem('leaderboard') != null) {
     if(JSON.parse(localStorage.getItem('leaderboard')).constructor != Object) {
@@ -27,10 +28,10 @@ if(localStorage.getItem('leaderboard') != null) {
 }
 
 //set mineCount
-if(document.getElementById("count").checked) {
-    config['mineCount'] = parseInt(document.getElementById("count").parentElement.children[1].value)
-} else if (document.getElementById("percent").checked) {
-    config['mineCount'] = Math.round((Math.pow(config['size'], 2)) * (parseInt(document.getElementById("percent").parentElement.children[1].value) / 100))
+if(config['count']) {
+    mineCount = config['mineCount']
+} else {
+    mineCount = Math.round((Math.pow(config['size'], 2)) * (config['minePercent'] / 100))
 }
 
 //add time to leaderboard
@@ -43,12 +44,26 @@ function addTime(time) {
     localStorage.setItem('leaderboard', JSON.stringify(leaderboard))
 }
 
+
+
 //open and close settings
 function setToggle() {
     if(settings.style.display == "none" ){
+        document.getElementById("count").parentElement.children[1].value = config['mineCount']
+        document.getElementById("percent").parentElement.children[1].value =  config['minePercent']
+        document.getElementById("count").checked = config['count']
+        document.getElementById("dimInput").value = config['size']
         settings.style.display = "block"
     } else {
         settings.style.display = "none"
+        console.log("aa")
+        config = {
+            "mineCount": parseInt(document.getElementById("count").parentElement.children[1].value),
+            "minePercent": parseInt(document.getElementById("percent").parentElement.children[1].value),
+            "count": document.getElementById("count").checked,
+            "size": parseInt(document.getElementById("dimInput").value)                 
+        }
+        localStorage.setItem('config', JSON.stringify(config))
         reset()
     }
 }

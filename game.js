@@ -2,10 +2,10 @@
 function propagate(xo,yo) {
 
     //decide amount
-    if((Math.pow(config['size'], 2)) - (9 + config['mineCount']) < 0) {
-        config['mineCount'] -= 9 //make sure always 9 spaces open
+    if((Math.pow(config['size'], 2)) - (9 + mineCount) < 0) {
+        mineCount -= 9 //make sure always 9 spaces open
     }
-    for (i = 0; i <= (config['mineCount']-1); i++){
+    for (i = 0; i <= (mineCount-1); i++){
         //define starting range, cannot have mine
         let range = []
         for (let y = -1; y < 2; y++) {
@@ -238,7 +238,6 @@ function win() { //woohoo!
 }
 
 function lose() { //boohoo!
-    console.log(game)
     if(game == "over") {return}
     endGame()
     stat.forEach((row, y) => { //reveal remaining tiles
@@ -315,5 +314,5 @@ function endGame() {
 //update flag counter
 function updateFlags(n) {
     flagCount += n 
-    flagCounter.innerHTML = `🏳 ${flagCount}/${config['mineCount']}`
+    flagCounter.innerHTML = `🏳 ${flagCount}/${mineCount}`
 }

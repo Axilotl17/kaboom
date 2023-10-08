@@ -31,9 +31,14 @@ minefield.oncontextmenu = function(e) { e.preventDefault(); e.stopPropagation();
 window.focus();
 
 //set up flag counter
-flagCounter.innerHTML = `🏳 0/${config['mineCount']}`
+flagCounter.innerHTML = `🏳 0/${mineCount}`
 
 //set up settings
+if(config['count']) {
+    document.getElementById("count").checked = true
+} else {
+    document.getElementById("count").checked = false
+}
 radio(config['count'])
 settings.style.display = "none"
 
@@ -66,7 +71,7 @@ function containsList(parent, child) {
 
 //returns current gamemode; e.g., 8x10, 16x38
 function currentLb() {
-    return `${config['size']}x${config['mineCount']}`
+    return `${config['size']}x${mineCount}`
 }
 
 //returns formatted time
@@ -205,7 +210,7 @@ function reset() {
     
     //create title
     let title = document.createElement('p')
-    title.innerHTML = `${config['size']}x${config['size']}, ${config['mineCount']} mines`
+    title.innerHTML = `${config['size']}x${config['size']}, ${mineCount} mines`
     title.style.width = "max-content"
     document.getElementById('leaderboard').append(title)
     
@@ -238,7 +243,7 @@ function reset() {
     drawGrid()
     document.getElementById("time").innerHTML = formatTimeElapsed(0)
     flagCount = 0
-    flagCounter.innerHTML = `🏳 ${flagCount}/${config['mineCount']}`
+    flagCounter.innerHTML = `🏳 ${flagCount}/${mineCount}`
     game = "pre"
 }
 
