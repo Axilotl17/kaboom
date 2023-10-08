@@ -30,14 +30,11 @@ var updateTime
 minefield.oncontextmenu = function(e) { e.preventDefault(); e.stopPropagation(); }
 window.focus();
 
-//set up flag counter
-flagCounter.innerHTML = `🏳 0/${mineCount}`
-
 //set up settings
 if(config['count']) {
     document.getElementById("count").checked = true
 } else {
-    document.getElementById("count").checked = false
+    document.getElementById("percent").checked = true
 }
 radio(config['count'])
 settings.style.display = "none"
@@ -201,6 +198,17 @@ function reset() {
     scalar = minefield.width/config['size']
     board = []
     stat = []
+
+    //set mineCount
+    if(config['count']) {
+        mineCount = config['mineCount']
+    } else {
+        mineCount = Math.round((Math.pow(config['size'], 2)) * (config['minePercent'] / 100))
+    }
+    mineCount = Math.min(mineCount, (Math.pow(config['size'], 2)-9))
+
+    //set up flag counter
+    flagCounter.innerHTML = `🏳 0/${mineCount}`
 
     //set up leaderboard
     if(leaderboard[currentLb()] == undefined) {

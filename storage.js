@@ -27,13 +27,6 @@ if(localStorage.getItem('leaderboard') != null) {
     localStorage.setItem('leaderboard', JSON.stringify({}))
 }
 
-//set mineCount
-if(config['count']) {
-    mineCount = config['mineCount']
-} else {
-    mineCount = Math.round((Math.pow(config['size'], 2)) * (config['minePercent'] / 100))
-}
-
 //add time to leaderboard
 function addTime(time) {
     leaderboard[currentLb()].push(time)
@@ -63,6 +56,12 @@ function setToggle() {
             "count": document.getElementById("count").checked,
             "size": parseInt(document.getElementById("dimInput").value)                 
         }
+        config['mineCount'] = Math.max(config['mineCount'], 1)
+        config['minePercent'] = Math.max(config['minePercent'], 1)
+        config['minePercent'] = Math.min(config['minePercent'], 100)
+        config['size'] = Math.max(config['size'], 4)
+        config['size'] = Math.min(config['size'], 100)
+
         localStorage.setItem('config', JSON.stringify(config))
         reset()
     }
