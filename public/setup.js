@@ -2,6 +2,7 @@
 const minefield = document.getElementById("minefield")
 const flagCounter = document.getElementById("flags")
 const settings = document.getElementById("settings")
+const multi = document.getElementById("multi")
 //canvas setup
 var minefieldDim = (window.innerHeight-14)
 var ctx = minefield.getContext("2d")
@@ -38,6 +39,7 @@ if(config['count']) {
 }
 radio(config['count'])
 settings.style.display = "none"
+multi.style.display = "none"
 
 //draw favicon
 favicon()
@@ -291,6 +293,30 @@ function tapHandler(e) {
     }
 }
 
+//open and close settings
+function setToggle() {
+    multi.style.display = "none"
+    if(settings.style.display == "none" ){
+        document.getElementById("count").parentElement.children[1].value = config['mineCount']
+        document.getElementById("percent").parentElement.children[1].value =  config['minePercent']
+        document.getElementById("count").checked = config['count']
+        document.getElementById("dimInput").value = config['size']
+        settings.style.display = "block"
+    } else {
+        settings.style.display = "none"
+        saveConfig()
+        reset()
+    }
+}
+
+//open and close multiplayer menu
+function multiToggle() {
+    if(multi.style.display == "none" ){
+        multi.style.display = "block"
+    } else {
+        multi.style.display = "none"
+    }
+}
 
 //update current mouse box
 minefield.addEventListener('mousemove', function(e) {

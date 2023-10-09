@@ -47,9 +47,9 @@ function draw(x, y) {
     ctx.beginPath(); 
     //fill background; gradient according to num
     ctx.fillStyle = `rgb(
-        ${220-((25/5)*board[y][x])},
-        ${220-((180/5)*board[y][x])}, 
-        ${220-((180/5)*board[y][x])}
+        ${220-((5)*board[y][x])},
+        ${220-((36)*board[y][x])}, 
+        ${220-((36)*board[y][x])}
         )`
     ctx.fillRect(
         x*scalar, 
