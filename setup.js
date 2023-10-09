@@ -211,7 +211,7 @@ function reset() {
     flagCounter.innerHTML = `🏳 0/${mineCount}`
 
     //set up leaderboard
-    if(leaderboard[currentLb()] == undefined) {
+    if(!Object.keys(leaderboard).includes(currentLb())) {
         leaderboard[currentLb()] = []
     }
     document.getElementById('leaderboard').innerHTML = ""
