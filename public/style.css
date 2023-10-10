@@ -25,6 +25,11 @@
     white-space: nowrap;
 }
 
+.greenButton {
+    background-color: rgb(68, 207, 68);
+    color: #000;
+    
+}
 .button-50:focus {
 text-decoration: none;
 }
@@ -44,11 +49,24 @@ transform: translate(2px, 2px);
 }
 
 @media (min-width: 768px) {
-.button-50 {
-    padding: 8px 20px;
-    width: 140px;
+    .button-50 {
+        padding: 8px 20px;
+        width: 140px;
+    }
 }
+
+canvas{
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    margin: 8px;
 }
+
+.layer {
+    pointer-events:none;
+    background-color: transparent;
+}
+
 #btnxp {
     position: relative;
     top:-1.6px;
@@ -103,11 +121,15 @@ td {
 #leaderboard {
     text-align: right
 }
+#board{
+    margin: 8px;
+}
 #info {
     margin-left: 20px;
 }
-.info {
+.sidebar {
     width: max-content;
+    margin-right: 10px;
 }
 .item {
     vertical-align:top
@@ -135,4 +157,7 @@ label {
 
     font-family: Andale Mono, AndaleMono, monospace;
     
+}
+.multiShow {
+    display: none;
 }

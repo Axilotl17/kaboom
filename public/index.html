@@ -9,31 +9,40 @@
             <tr>
                 <td>
                     <div id = "board" class = "item">
-                        <canvas id="minefield" width="1600" height="1600" class = "divider"></canvas> 
+                        <canvas id="minefield" width="1600" height="1600" style="z-index: 0;"></canvas>
+                        <canvas id="grid" width="1600" height="1600" style="z-index: 1;" class = "layer"></canvas>
+                        <canvas id="outcome" width="1600" height="1600" style="z-index: 2;" class = "layer"></canvas>
+                        <canvas id="multiCanv" width="1600" height="1600" style="z-index: 3;" class = "layer"></canvas>
                     </div>
                 </td>
                 <td width="100%">
                     <div id = "info" class = "item">
                         <p id = "time" class = "info">00:00.00</p>
                         <p id = "flags" class = "info">🏳</p>
-                        <button onclick="setToggle()" class="button-50" role="button">Settings</button><br>
-                        <button onclick="multiToggle()" class="button-50" role="button">Multiplayer</button>
+                        <button onclick="setToggle()" class="button-50 multiHide" role="button">Board Settings</button><br class="multiHide">
+                        <button onclick="multiToggle()" class="button-50 multiHide" role="button">Multiplayer</button>
+                        <button onclick="roomSetToggle()" class="button-50 multiShow" role="button">Room Settings</button>
+                        <button onclick="multiLeave()" class="button-50 multiShow" role="button">Leave Game</button>
+                        <button onclick="multiStart()" class="button-50 multiShow greenButton" role="button">Start Game</button>
                 </td>
                 <td>
-                    <div id = "leaderboard" class = "item">
+                    <div id = "leaderboard" class = "sidebar multiHide">
+                    </div>
+                    <div id = "multiInfo" class = "sidebar multiShow" style="display: none;">
+                        <p>Game </p>
                     </div>
                 </td>
             </tr>
         </table>
         <div id = "settings" class = "popup">
             <div class = "container">
-                <h2>Settings</h2>
+                <h2>Board Settings</h2>
                 <p class = "setting">
-                    <input type="radio" id="count" name="mines" onclick="radio(true)"> Mine #: 
+                    <input type="radio" id="count" name="mines" onclick="countSet(true)"> Mine #: 
                     <input type="number" size=6 min=0 value =10>
                 </p>
                 <p class = "setting">
-                    <input type="radio" id="percent" name="mines" onclick="radio(false)"> Mine %: 
+                    <input type="radio" id="percent" name="mines" onclick="countSet(false)"> Mine %: 
                     <input type="number" size=6 max=100 min=0 value =15> %
                 </p>
                 <p class = "setting">
@@ -63,10 +72,31 @@
                 <button id = "btnx" onclick="multiToggle()"><p id = "btnxp">x</p></button>
             </div>
         </div>
+        <div id = "roomSet" class = "popup">
+            <div class = "container">
+                <h2>Room Settings</h2>
+                <label>Gamemode: </label>
+                <select id="gamemode">
+                    <option value="blitz">Blitz</option>
+                    <!-- <option value="bullet">Bullet</option> -->
+                </select>
+                <div id="blitzSet">
+                    <p class = "setting">
+                        <input type="radio" id="roomTime" name="roomLimit" onclick="roomTimeSet(true)" checked="true"> Time limit:
+                        <input type="number" size=8 min=0 value =10> seconds
+                    </p>
+                    <p class = "setting">
+                        <input type="radio" id="roomAmount" name="roomLimit" onclick="roomTimeSet(false)"> Game limit:
+                        <input type="number" size=8 max=100 min=0 value =15> games
+                    </p>
+                </div>
+                <button id = "btnx" onclick="roomSetToggle()"><p id = "btnxp">x</p></button>
+            </div>
+        </div>
     </body>
     <script src="/socket.io/socket.io.js"></script>
+    <script src="multi.js"></script>
     <script src="storage.js"></script> 
     <script src="setup.js"></script> 
     <script src="game.js"></script>
-    <script src="multi.js"></script>
 </html>

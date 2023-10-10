@@ -1,12 +1,12 @@
 
-//fix empty config
-if(localStorage.getItem('config') != null) {
-    if(JSON.parse(localStorage.getItem('config')).constructor != Object) {
-        localStorage.setItem('config', JSON.stringify({}))
+//fix empty set
+if(localStorage.getItem('set') != null) {
+    if(JSON.parse(localStorage.getItem('set')).constructor != Object) {
+        localStorage.setItem('set', JSON.stringify({}))
     }
 } else {
     //set default
-    localStorage.setItem('config', JSON.stringify({
+    localStorage.setItem('set', JSON.stringify({
         "mineCount": 10,
         "minePercent": 15,
         "count": true,
@@ -15,7 +15,7 @@ if(localStorage.getItem('config') != null) {
 }
 
 //global vars
-var config = JSON.parse(localStorage.getItem('config'))
+var set = JSON.parse(localStorage.getItem('set'))
 var leaderboard = JSON.parse(localStorage.getItem('leaderboard'))
 
 //fix empty leaderboard
@@ -37,9 +37,9 @@ function addTime(time) {
     localStorage.setItem('leaderboard', JSON.stringify(leaderboard))
 }
 
-//saves setting config
+//saves setting set
 function saveConfig() {
-    config = {
+    set = {
         "mineCount": parseInt(document.getElementById("count").parentElement.children[1].value),
         "minePercent": parseInt(document.getElementById("percent").parentElement.children[1].value),
         "count": document.getElementById("count").checked,
@@ -47,11 +47,11 @@ function saveConfig() {
     }
 
     //mins and maxes
-    config['mineCount'] = Math.max(config['mineCount'], 1)
-    config['minePercent'] = Math.max(config['minePercent'], 1)
-    config['minePercent'] = Math.min(config['minePercent'], 100)
-    config['size'] = Math.max(config['size'], 4)
-    config['size'] = Math.min(config['size'], 100)
+    set['mineCount'] = Math.max(set['mineCount'], 1)
+    set['minePercent'] = Math.max(set['minePercent'], 1)
+    set['minePercent'] = Math.min(set['minePercent'], 100)
+    set['size'] = Math.max(set['size'], 4)
+    set['size'] = Math.min(set['size'], 100)
 
-    localStorage.setItem('config', JSON.stringify(config))
+    localStorage.setItem('set', JSON.stringify(set))
 }

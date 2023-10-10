@@ -2,16 +2,16 @@
 function propagate(xo,yo) {
 
     //decide amount
-    if((Math.pow(config['size'], 2)) - (9 + mineCount) < 0) {
+    if((Math.pow(set['size'], 2)) - (9 + mineCount) < 0) {
         mineCount -= 9 //make sure always 9 spaces open
     }
     for (i = 0; i <= (mineCount-1); i++){
         //define starting range, cannot have mine
         let range = []
         for (let y = -1; y < 2; y++) {
-            if(yo+y >= 0 && yo+y < config['size']) {
+            if(yo+y >= 0 && yo+y < set['size']) {
                 for (let x = -1; x < 2; x++) {
-                    if(xo+x >= 0 && xo+x < config['size']) {
+                    if(xo+x >= 0 && xo+x < set['size']) {
                         range.push([(xo+x), (yo+y)])
                     }
                 }
@@ -19,18 +19,18 @@ function propagate(xo,yo) {
         }
 
         //pick random one
-        let box = [randNum(config['size']), randNum(config['size'])]
+        let box = [randNum(set['size']), randNum(set['size'])]
         //redo if taken
         while(board[box[1]][box[0]] == 9 || containsList(range, [(box[0]), (box[1])])) {
-            box = [randNum(config['size']), randNum(config['size'])]
+            box = [randNum(set['size']), randNum(set['size'])]
         }
         //set as mine
         board[box[1]][box[0]] = 9
         //incriment surrounding tiles
         for (let y = -1; y < 2; y++) {
-            if(box[1]+y >= 0 && box[1]+y <= (config['size']-1)) {
+            if(box[1]+y >= 0 && box[1]+y <= (set['size']-1)) {
                 for (let x = -1; x < 2; x++) {
-                    if(box[0]+x >= 0 && box[0]+x < config['size']) {
+                    if(box[0]+x >= 0 && box[0]+x < set['size']) {
                         if(board[box[1]+y][box[0]+x] != 9) {
                             board[box[1]+y][box[0]+x]++
                         }
@@ -105,9 +105,9 @@ function reveal(xo, yo, click) {
     }
     if (board[yo][xo] == 0) { //if zero, reveal surrounding
         for (let y = -1; y < 2; y++) {
-            if(yo+y >= 0 && yo+y < config['size']) {
+            if(yo+y >= 0 && yo+y < set['size']) {
                 for (let x = -1; x < 2; x++) {
-                    if(xo+x >= 0 && xo+x < config['size']) {
+                    if(xo+x >= 0 && xo+x < set['size']) {
                         if(stat[yo+y][xo+x] === false || stat[yo+y][xo+x] === "flag"){
                             reveal(xo+x, yo+y, false) 
                         }
@@ -119,9 +119,9 @@ function reveal(xo, yo, click) {
         let flags = 0
         //count surrounding flags
         for (let y = -1; y < 2; y++) {
-            if(yo+y >= 0 && yo+y < config['size']) {
+            if(yo+y >= 0 && yo+y < set['size']) {
                 for (let x = -1; x < 2; x++) {
-                    if(xo+x >= 0 && xo+x < config['size']) {
+                    if(xo+x >= 0 && xo+x < set['size']) {
                         if(stat[yo+y][xo+x] === "flag"){
                             flags++
                         }
@@ -131,9 +131,9 @@ function reveal(xo, yo, click) {
         }
         if(flags == (board[yo][xo])) { //if enough flags, reveal surrounding
             for (let y = -1; y < 2; y++) {
-                if(yo+y >= 0 && yo+y < config['size']) {
+                if(yo+y >= 0 && yo+y < set['size']) {
                     for (let x = -1; x < 2; x++) {
-                        if(xo+x >= 0 && xo+x < config['size']) {
+                        if(xo+x >= 0 && xo+x < set['size']) {
                             if(stat[yo+y][xo+x] === false){
                                 reveal(xo+x, yo+y, false)
                             }
@@ -154,13 +154,13 @@ function flag(x,y) {
         ctx.beginPath()
         ctx.fillStyle="rgb(120,220,120)"
         ctx.fillRect( //green rect
-        ((x/config['size'])*minefield.width),
-        ((y/config['size'])*minefield.width),
+        ((x/set['size'])*minefield.width),
+        ((y/set['size'])*minefield.width),
         (scalar), 
         (scalar)
         );
         drawGrid()
-        ctx.lineWidth = minefield.width/(config['size']*10)
+        ctx.lineWidth = minefield.width/(set['size']*10)
         line( //post
             (.7+x)*(scalar),
             (.2+y)*(scalar),
