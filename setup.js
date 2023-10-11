@@ -211,9 +211,13 @@ function reset() {
     flagCounter.innerHTML = `🏳 0/${mineCount}`
 
     //set up leaderboard
+    if(leaderboard == null || leaderboard == undefined) {
+        leaderboard = {}
+    }
     if(!Object.keys(leaderboard).includes(currentLb())) {
         leaderboard[currentLb()] = []
     }
+
     document.getElementById('leaderboard').innerHTML = ""
     
     //create title
