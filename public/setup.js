@@ -1,12 +1,23 @@
 //html refs
-const minefield = document.getElementById("minefield")
 const flagCounter = document.getElementById("flags")
 const settings = document.getElementById("settings")
+const multi = document.getElementById("multi")
+
 //canvas setup
-var minefieldDim = (window.innerHeight-14)
+const gameBoard = document.getElementById("board")
+const minefield = document.getElementById("minefield")
 var ctx = minefield.getContext("2d")
-minefield.style.height = minefieldDim.toString()+"px"
-minefield.style.width = minefieldDim.toString()+"px"
+const grid = document.getElementById("minefield")
+var GDctx = grid.getContext("2d", {
+    alpha: false
+})
+// const outcome = document.getElementById("outcome")
+// var OCctx = outcome.getContext("2d", {
+//     alpha: false
+// })
+
+var minefieldDim = (window.innerHeight-16)
+resize()
 
 //make global vars
 var board = []
@@ -31,19 +42,30 @@ minefield.oncontextmenu = function(e) { e.preventDefault(); e.stopPropagation();
 window.focus();
 
 //set up settings
-if(config['count']) {
+if(set['count']) {
     document.getElementById("count").checked = true
 } else {
     document.getElementById("percent").checked = true
 }
-radio(config['count'])
+countSet(set['count'])
 settings.style.display = "none"
+multi.style.display = "none"
 
 //draw favicon
 favicon()
 
 //prepare game
 reset()
+
+function resize() {
+    minefieldDim = (window.innerHeight-16)
+    Array.from(gameBoard.children).forEach(element => {
+        element.style.height = minefieldDim.toString()+"px"
+        element.style.width = minefieldDim.toString()+"px"
+    });
+    gameBoard.style.height = minefieldDim.toString()+"px"
+    gameBoard.style.width = minefieldDim.toString()+"px"
+}
 
 //generates random numbers
 function randNum(lim) {
@@ -68,7 +90,7 @@ function containsList(parent, child) {
 
 //returns current gamemode; e.g., 8x10, 16x38
 function currentLb() {
-    return `${config['size']}x${mineCount}`
+    return `${set['size']}x${mineCount}`
 }
 
 //returns formatted time
@@ -105,18 +127,18 @@ function line(x1, y1, x2, y2, round, canv) {
 //draws a grid for the minefield
 function drawGrid(){
     ctx.lineWidth = 1.5
-    for (i = 1; i < config['size']; i++) {
+    for (i = 1; i < set['size']; i++) {
         let width = minefield.width
-        let size = width/config['size']
-        line(i*size, 0, i*size, width) // x
-        line(0, i*size, width, i*size) // y
-        line(i*size, 0, i*size, width)
-        line(0, i*size, width, i*size)
+        let size = width/set['size']
+        line(i*size, 0, i*size, width, false, GDctx) // x
+        line(0, i*size, width, i*size, false, GDctx) // y
+        line(i*size, 0, i*size, width, false, GDctx)
+        line(0, i*size, width, i*size, false, GDctx)
     }
 }
 
 //disables non-toggled setting
-function radio(count) {
+function countSet(count) {
     document.getElementById("count").parentElement.children[1].disabled = !count
     document.getElementById("percent").parentElement.children[1].disabled = count
 }
@@ -180,10 +202,10 @@ function favicon() {
 
 //logging function
 function logBoard () {
-    for (j = 0; j < config['size']; j++){
+    for (j = 0; j < set['size']; j++){
         console.log(board[j])
     }
-    for (j = 0; j < config['size']; j++){
+    for (j = 0; j < set['size']; j++){
         console.log(stat[j])
     }
 }
@@ -195,34 +217,30 @@ function reset() {
 
     //set vars
     firstClick = true
-    scalar = minefield.width/config['size']
+    scalar = minefield.width/set['size']
     board = []
     stat = []
 
     //set mineCount
-    if(config['count']) {
-        mineCount = config['mineCount']
+    if(set['count']) {
+        mineCount = set['mineCount']
     } else {
-        mineCount = Math.round((Math.pow(config['size'], 2)) * (config['minePercent'] / 100))
+        mineCount = Math.round((Math.pow(set['size'], 2)) * (set['minePercent'] / 100))
     }
-    mineCount = Math.min(mineCount, (Math.pow(config['size'], 2)-9))
+    mineCount = Math.min(mineCount, (Math.pow(set['size'], 2)-9))
 
     //set up flag counter
     flagCounter.innerHTML = `🏳 0/${mineCount}`
 
     //set up leaderboard
-    if(leaderboard == null || leaderboard == undefined) {
-        leaderboard = {}
-    }
     if(!Object.keys(leaderboard).includes(currentLb())) {
         leaderboard[currentLb()] = []
     }
-
     document.getElementById('leaderboard').innerHTML = ""
     
     //create title
     let title = document.createElement('p')
-    title.innerHTML = `${config['size']}x${config['size']}, ${mineCount} mines`
+    title.innerHTML = `${set['size']}x${set['size']}, ${mineCount} mines`
     title.style.width = "max-content"
     document.getElementById('leaderboard').append(title)
     
@@ -234,18 +252,18 @@ function reset() {
     })
 
     //set up board
-    for (i = 0; i < config['size']; i++){
+    for (i = 0; i < set['size']; i++){
         let line = []     
-        for (j = 0; j < config['size']; j++){
+        for (j = 0; j < set['size']; j++){
             line.push(0)
         }
         board.push(line)
     }
 
     //set up status
-    for (i = 0; i < config['size']; i++){
+    for (i = 0; i < set['size']; i++){
         let line = []     
-        for (j = 0; j < config['size']; j++){
+        for (j = 0; j < set['size']; j++){
             line.push(false)
         }
         stat.push(line)
@@ -265,8 +283,8 @@ function clickHandler(e) {
     //find current cursor's box
     let rect = minefield.getBoundingClientRect();
     let box = []
-    box[0] = Math.floor(((e.clientX - rect.left)/minefieldDim)*config['size'])
-    box[1] = Math.floor(((e.clientY - rect.top)/minefieldDim)*config['size'])
+    box[0] = Math.floor(((e.clientX - rect.left)/minefieldDim)*set['size'])
+    box[1] = Math.floor(((e.clientY - rect.top)/minefieldDim)*set['size'])
     switch (e.button) {
         case 0: //left click
             check(box[0], box[1])
@@ -295,14 +313,38 @@ function tapHandler(e) {
     }
 }
 
+//open and close settings
+function setToggle() {
+    multi.style.display = "none"
+    if(settings.style.display == "none" ){
+        document.getElementById("count").parentElement.children[1].value = set['mineCount']
+        document.getElementById("percent").parentElement.children[1].value =  set['minePercent']
+        document.getElementById("count").checked = set['count']
+        document.getElementById("dimInput").value = set['size']
+        settings.style.display = "block"
+    } else {
+        settings.style.display = "none"
+        saveConfig()
+        reset()
+    }
+}
+
+//open and close multiplayer menu
+function multiToggle() {
+    if(multi.style.display == "none" ){
+        multi.style.display = "block"
+    } else {
+        multi.style.display = "none"
+    }
+}
 
 //update current mouse box
 minefield.addEventListener('mousemove', function(e) {
     //find current cursor's box
     let rect = minefield.getBoundingClientRect();
     let box = []
-    boxX = Math.floor(((e.clientX - rect.left)/minefieldDim)*config['size'])
-    boxY = Math.floor(((e.clientY - rect.top)/minefieldDim)*config['size'])
+    boxX = Math.floor(((e.clientX - rect.left)/minefieldDim)*set['size'])
+    boxY = Math.floor(((e.clientY - rect.top)/minefieldDim)*set['size'])
 });
 
 //make undefined when leave; doesnt create errors
@@ -332,8 +374,4 @@ minefield.addEventListener('mousedown', clickHandler)
 window.addEventListener('keydown', tapHandler, true)
 
 //window resizer
-addEventListener("resize", function(e) {
-    minefieldDim = (window.innerHeight-14)
-    minefield.style.height = minefieldDim.toString()+"px"
-    minefield.style.width = minefieldDim.toString()+"px"
-});
+addEventListener("resize", resize)
