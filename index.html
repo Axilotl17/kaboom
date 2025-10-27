@@ -2,7 +2,7 @@
 <html>
     <head>
         <title>Kaboom!</title>
-        <link rel="stylesheet" href="style.css">
+        <link rel="stylesheet" href="./public/style.css">
     </head>
     <body>
         <table>
@@ -19,7 +19,6 @@
                         <p id = "time" class = "info">00:00.00</p>
                         <p id = "flags" class = "info">🏳</p>
                         <button onclick="setToggle()" class="button-50" role="button">Board Settings</button><br>
-                        <button onclick="roomSetToggle()" class="button-50" role="button">Room Settings</button>
                 </td>
                 <td>
                     <div id = "leaderboard" class = "sidebar">
@@ -46,29 +45,8 @@
                 <button id = "btnx" onclick="setToggle()"><p id = "btnxp">x</p></button>
             </div> 
         </div>
-        <div id = "roomSet" class = "popup">
-            <div class = "container">
-                <h2>Room Settings</h2>
-                <label>Gamemode: </label>
-                <select id="gamemode">
-                    <option value="blitz">Blitz</option>
-                    <!-- <option value="bullet">Bullet</option> -->
-                </select>
-                <div id="blitzSet">
-                    <p class = "setting">
-                        <input type="radio" id="roomTime" name="roomLimit" onclick="roomTimeSet(true)" checked="true"> Time limit:
-                        <input type="number" size=8 min=0 value =10> seconds
-                    </p>
-                    <p class = "setting">
-                        <input type="radio" id="roomAmount" name="roomLimit" onclick="roomTimeSet(false)"> Game limit:
-                        <input type="number" size=8 max=100 min=0 value =15> games
-                    </p>
-                </div>
-                <button id = "btnx" onclick="roomSetToggle()"><p id = "btnxp">x</p></button>
-            </div>
-        </div>
     </body>
-    <script src="storage.js"></script> 
-    <script src="setup.js"></script> 
-    <script src="game.js"></script>
+    <script src="./public/storage.js"></script> 
+    <script src="./public/setup.js"></script> 
+    <script src="./public/game.js"></script>
 </html>
