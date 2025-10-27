@@ -96,55 +96,54 @@ function draw(x, y) {
 function reveal(xo, yo, click) {
     if(stat[yo][xo] === false){ // if not revealed
         draw(xo, yo)
-    } else if (stat[yo][xo] == "flag" && click === false){ //if removing flag
+    } else if (stat[yo][xo] === "flag" && click === false){ //if removing flag
         stat[yo][xo] = false
         draw(xo, yo)
     }
     if (board[yo][xo] == 9 && stat[yo][xo] != "flag") { //if click on mine
         lose()
     }
-    if (board[yo][xo] == 0) { //if zero, reveal surrounding
-        for (let y = -1; y < 2; y++) {
-            if(yo+y >= 0 && yo+y < set['size']) {
-                for (let x = -1; x < 2; x++) {
-                    if(xo+x >= 0 && xo+x < set['size']) {
-                        if(stat[yo+y][xo+x] === false || stat[yo+y][xo+x] === "flag"){
-                            reveal(xo+x, yo+y, false) 
-                        }
-                    }
-                }
-            }
-        }
+    if (board[yo][xo] == 0) { //if zero, reveal surrounding   
+        runForAdjacent((nx, ny) => {
+            if(stat[ny][nx] === false || stat[ny][nx] === "flag"){
+                reveal(nx, ny, false) 
+            }   
+        }, xo, yo);
     } else if (stat[yo][xo] === true && click) { //if click on revealed square
         let flags = 0
         //count surrounding flags
-        for (let y = -1; y < 2; y++) {
-            if(yo+y >= 0 && yo+y < set['size']) {
-                for (let x = -1; x < 2; x++) {
-                    if(xo+x >= 0 && xo+x < set['size']) {
-                        if(stat[yo+y][xo+x] === "flag"){
-                            flags++
-                        }
-                    }
-                }
-            }
-        }
+        runForAdjacent((nx, ny) => {
+            console.log(nx + ", " + ny)
+            if(stat[ny][nx] === "flag"){
+                flags++
+            }    
+        }, xo, yo);
         if(flags == (board[yo][xo])) { //if enough flags, reveal surrounding
-            for (let y = -1; y < 2; y++) {
-                if(yo+y >= 0 && yo+y < set['size']) {
-                    for (let x = -1; x < 2; x++) {
-                        if(xo+x >= 0 && xo+x < set['size']) {
-                            if(stat[yo+y][xo+x] === false){
-                                reveal(xo+x, yo+y, false)
-                            }
-                        }
-                    }
+            runForAdjacent((nx, ny) => {
+                if(stat[ny][nx] === false){
+                    reveal(nx, ny, false)
                 }
-            }
+            }, xo, yo);
         }
     }
     checkWin()
 }
+
+function runForAdjacent(func, xo, yo) {
+    for (let y = -1; y < 2; y++) {
+        if(yo+y >= 0 && yo+y < set['size']) {
+            for (let x = -1; x < 2; x++) {
+                if(xo+x >= 0 && xo+x < set['size']) {
+                    func(xo+x, yo+y);
+                }
+            }
+        }
+    }
+}
+
+// runForAdjacent((nx, ny) => {
+    
+// }, xo, yo);
 
 //mark flag
 function flag(x,y) {
