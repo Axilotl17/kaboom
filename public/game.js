@@ -113,7 +113,6 @@ function reveal(xo, yo, click) {
         let flags = 0
         //count surrounding flags
         runForAdjacent((nx, ny) => {
-            console.log(nx + ", " + ny)
             if(stat[ny][nx] === "flag"){
                 flags++
             }    
