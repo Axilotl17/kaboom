@@ -1,7 +1,6 @@
 //html refs
 const flagCounter = document.getElementById("flags")
 const settings = document.getElementById("settings")
-const multi = document.getElementById("multi")
 
 //canvas setup
 const gameBoard = document.getElementById("board")
@@ -49,7 +48,6 @@ if(set['count']) {
 }
 countSet(set['count'])
 settings.style.display = "none"
-multi.style.display = "none"
 
 //draw favicon
 favicon()
@@ -315,7 +313,6 @@ function tapHandler(e) {
 
 //open and close settings
 function setToggle() {
-    multi.style.display = "none"
     if(settings.style.display == "none" ){
         document.getElementById("count").parentElement.children[1].value = set['mineCount']
         document.getElementById("percent").parentElement.children[1].value =  set['minePercent']
@@ -329,20 +326,10 @@ function setToggle() {
     }
 }
 
-//open and close multiplayer menu
-function multiToggle() {
-    if(multi.style.display == "none" ){
-        multi.style.display = "block"
-    } else {
-        multi.style.display = "none"
-    }
-}
-
 //update current mouse box
 minefield.addEventListener('mousemove', function(e) {
     //find current cursor's box
     let rect = minefield.getBoundingClientRect();
-    let box = []
     boxX = Math.floor(((e.clientX - rect.left)/minefieldDim)*set['size'])
     boxY = Math.floor(((e.clientY - rect.top)/minefieldDim)*set['size'])
 });
