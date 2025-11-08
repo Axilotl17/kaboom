@@ -1,4 +1,8 @@
-function solveNext() {
+const maxLevel = 3
+var level
+
+function startSolve() {
+
     if(firstClick === true) {
         startTime = Date.now();
         mid = Math.floor((set['size'] - 1)/2);
@@ -8,130 +12,174 @@ function solveNext() {
             document.getElementById("time").innerHTML = formatTimeElapsed(Date.now() - startTime, true)
         }, 1)
         firstClick = false
-            reveal(mid, mid, true)
+        reveal(mid, mid, true)
         drawGrid()
     }
-    else{
-        solve();
+    level = 0 
+    possibleSols = []
+    solution = solve()
+    if(solution.some(x => x.includes(-1))) {
+        console.log("got stuck")
+    } else if (matrixEquality(solution, board)) {
+        console.log("solved successfully!")
+    } else {
+        console.log("incorrect solution.")
+    }
+
+    if(true) {
+        runForAll((x, y) => {
+            if(solution[y][x] === 9) {
+                if(stat[y][x] != "flag") flag(x, y);
+            } else if (solution[y][x] >= 0) reveal(x, y);
+        });
     }
 }
 
-function solve() {
+function solve(solving) {
+    let immediate = true;
 
-    // this solves for all trivial solutions
-    for (let y = 0; y < board.length; y++) {
-        for (let x = 0; x < board[y].length; x++) {
-            if (stat[y][x] === true && board[y][x] > 0) { // if revealed and not 0
+    if(!solving) {
+        immediate = false;
+        solving = board.map((row, y) => row.map((item, x) => {
+            if(stat[y][x]) {return item} else return -1; // -1 is unknown, 9 is mine
+        }));
+    };
+
+    while(solving.some(x => x.includes(-1))) { // while unknowns in solution
+        let next = false;
+        if(level < 1) level = 1
+
+        // this solves for all trivial solutions
+        runForAll((x, y) => {
+            if (solving[y][x] >= 0 && solving[y][x] != 9) { // if revealed
                 let spots = 0;
                 let flags = 0;
                 
                 runForAdjacent((nx, ny) => { // count spots and flags
-                    if (!stat[ny][nx]) spots++;
-                    if (stat[ny][nx] === "flag") flags++;
+                    if (solving[ny][nx] === -1) spots++;
+                    if (solving[ny][nx] === 9) flags++;
                 }, x, y);
 
-                //console.log("checking" + x + "," + y + " : " + spots + "," + flags)
-                if (flags === board[y][x] && spots > 0) { // if complete, reveal around
-                    //console.log("revealing around " + x + ", " + y)
+                if (flags === solving[y][x] && spots > 0 && !immediate) { // if complete, reveal around
                     runForAdjacent((nx, ny) => {
-                        if (!stat[ny][nx]) reveal(nx, ny);
+                        if (solving[ny][nx] === -1) solving[ny][nx] = board[ny][nx];
+                        if (solving[ny][nx] === -1) {
+                            console.log(`revealing ${nx}, ${ny} by ${x}, ${y}. ${flags} flags, ${spots} spots.`)
+                            if (board[ny][nx] === 9) { // debug
+                                console.log(`REVEALED MINE @ ${nx}, ${ny}`)
+                                console.log(solving)
+                            }
+                        }
                     }, x, y); 
-                    return true; // exits `solve()` immediately
-                } else if (spots === board[y][x] - flags && spots > 0) { // if incomplete and trivial, complete
-                    //console.log("flagging around " + x + ", " + y)
+                    next = true; // exits the while loop
+                } else if (spots === solving[y][x] - flags && spots > 0) { // if incomplete and trivial, complete
                     runForAdjacent((nx, ny) => {
-                        if (!stat[ny][nx]) flag(nx, ny);
+                        if (solving[ny][nx] === -1) solving[ny][nx] = 9;
                     }, x, y);
-                    return true;
+                    next = true;
                 }
             }
-        }
-    }
+        })
 
-    for (let y = 0; y < board.length; y++) { // matrix time
-        for (let x = 0; x < board[y].length; x++) { 
-            if (stat[y][x] === true && board[y][x] > 0) { // any nonzero revealed space
-                let spots = 0;
-                let flags = 0;
-                
-                runForAdjacent((nx, ny) => { // count spots and flags
-                    if (!stat[ny][nx]) spots++;
-                    if (stat[ny][nx] === "flag") flags++;
-                }, x, y);
+        if(next) continue;
+        if(level < 2) level = 2
 
-                if(flags != board[y][x] && spots != board[y][x] - flags && spots > 0){ // only if incomplete
-                    let unknowns = []
-                    let matrix = []
-                    let queue = {}
+        let {matrix, unknowns} = matrixFill(solving) // returns matrix and unknowns as a key
 
-                    queue[`${x}, ${y}`] = {
-                        'checked' : false,
-                        'x' : x,
-                        'y' : y
-                    }
-                    matrixFill(x, y, unknowns, queue, matrix)
-                    console.log(matrix)
-                    // matrix = rref(matrix)
-                    // matrix.forEach(element => {
-                    //     console.log(element)
-                    // });
-                    return true;
+        rref(matrix).forEach((row) => {
+            console.log(row)
+            if(row.indexOf(-1) === -1) {
+                if(row.slice(0, -1).filter(e => e === 1).length === 1 && row.at(-1) == 1) {
+                    let x = unknowns[row.indexOf(1)][0] // the x value of the unknown at the pivot
+                    let y = unknowns[row.indexOf(1)][1]
+                    solving[y][x] = 9
+                    next = true
+                } else if (row.at(-1) == 0 && row.at(-1) === 0 && !immediate) { // considers when [1 1 1 | 0
+                    row.forEach((e, i) => {
+                        if(e === 1){
+                            let x = unknowns[i][0] // the x value of the unknown at the 1
+                            let y = unknowns[i][1]
+                            solving[y][x] = board[y][x]
+                            if(board[y][x] === 9) { // debug
+                                console.log(`REVEALED MINE @ ${x}, ${y}`)
+                                console.log(solving)
+                                }
+                            next = true
+                        }
+                    })
                 }
             }
-        }
+        });
+
+        if(next) continue;
+        if(level < 3) level = 3
+
+        if(immediate) return solving;
+
+        // let possibleSols = []
+
+        unknowns.forEach(unknown => {
+            solution = solving.map((r, i) => r.map((e, j) => {
+                if(i === unknown[1] && j === unknown[1]) {
+                    console.log(`replacing ${unknown[0]}, ${unknown[1]} with 9`)
+                    return 9
+                } else {
+                    //console.log(`replacing ${unknown[0]}, ${unknown[1]} with ${e}`)
+                    return e
+                }
+            }))
+            possibleSols.push(solve(solution));
+        })
+
+        console.log(possibleSols)
+        if(next) continue;
+        console.log(unknowns)
+        return solving; // if stuck this will trigger
     }
+    return solving; // if solution in one go this will trigger
 }
 
-function matrixFill(x, y, unknowns, queue, matrix) {
-    console.log('queue:')
-    console.log(queue)
-    console.log(`checking around ${x}, ${y}`)
-    queue[`${x}, ${y}`].checked = true; // true means has been checked 
+var possibleSols = []
 
-    let flags = 0
+function matrixFill(solving) {
+    let matrix = []
+    let unknowns = []
+    runForAll((x, y) => {
+        if (solving[y][x] > 0 && solving[y][x] != 9) { // any nonzero revealed space
+            let spots = 0;
+            let flags = 0;
+            
+            runForAdjacent((nx, ny) => { // count spots and flags
+                if (solving[ny][nx] === -1) spots++;
+                if (solving[ny][nx] === 9) flags++;
+            }, x, y);
 
-    runForAdjacent((nx, ny) => { // count spots and flags
-        if (stat[ny][nx] === "flag") flags++;
-    }, x, y);
+            if(flags != solving[y][x] && spots != solving[y][x] - flags && spots > 0){ // only if incomplete
+                // console.log(`checking around ${x}, ${y}`)
+                matrix.push([...Array(unknowns.length).fill(0), solving[y][x] - flags]); // new row
+                runForAdjacent((nx, ny) => {
+                    let loc = [nx, ny]; // location
+                    if (solving[ny][nx] === -1) {
+                        //console.log('is unknown')
+                        let index = unknowns.findIndex(sub => sub[0] === loc[0] && sub[1] === loc[1]);
 
-    matrix.push([...Array(unknowns.length).fill(0), board[y][x] - flags]); // new row
-    runForAdjacent((nx, ny) => {
-        let loc = `${nx}, ${ny}`; // location
-        //console.log(`checking ${loc} by ${x}, ${y}`)
-
-        let nflags = 0
-
-        runForAdjacent((nx, ny) => { // count spots and flags
-            if (stat[ny][nx] === "flag") nflags++;
-        }, x, y);
-        if (!stat[ny][nx]) {
-            //console.log('is unknown')
-            let index = unknowns.indexOf(loc);
-
-            if(index == -1) { // if not already considered
-                unknowns.push(loc);
-                index = unknowns.length - 1
-                for(let i = 0; i < matrix.length; i++) { // fill new column 
-                    matrix[i].splice(matrix[i].length - 1, 0, 0) // but in penultimate pos
-                }
-            }
-
-            matrix[matrix.length - 1][index] = 1;
-        } else if (stat[ny][nx] === true && board[ny][nx] - nflags > 0) { 
-            console.log(`nflags = ${nflags}`)
-            console.log(`board[${ny}][${nx}] = ${board[ny][nx]}`)
-            if(!(loc in queue)) {
-                queue[loc] = {
-                    'checked' : false,
-                    'x' : nx,
-                    'y' : ny
-                }
+                        if(index == -1) { // if not already considered
+                            unknowns.push(loc);
+                            index = unknowns.length - 1
+                            for(let i = 0; i < matrix.length; i++) { // fill new column 
+                                matrix[i].splice(Math.max(matrix[i].length - 1, 0), 0, 0) // but in penultimate pos
+                            }
+                        }
+                        matrix[matrix.length - 1][index] = 1;
+                    }
+                }, x, y);
             }
         }
-    }, x, y);
-    nextUp = Object.entries(queue).find(([key, val]) => !val.checked); // first element that isnt checked
-    console.log(queue)
-    if(nextUp) matrixFill(nextUp[1].x, nextUp[1].y, unknowns, queue, matrix);
+    })
+    return({
+        "matrix" : matrix,
+        "unknowns" : unknowns
+    })
 }
 
 function rref(matrix) {
@@ -178,4 +226,8 @@ function rref(matrix) {
         lead++;
     }
     return matrix;
+}
+
+function matrixEquality(matrixA, matrixB) {
+    return !matrixA.some((r, i) => r.some((e, j) => e != matrixB[i][j]))
 }

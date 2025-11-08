@@ -8,15 +8,10 @@ function propagate(xo,yo) {
     for (i = 0; i <= (mineCount-1); i++){
         //define starting range, cannot have mine
         let range = []
-        for (let y = -1; y < 2; y++) {
-            if(yo+y >= 0 && yo+y < set['size']) {
-                for (let x = -1; x < 2; x++) {
-                    if(xo+x >= 0 && xo+x < set['size']) {
-                        range.push([(xo+x), (yo+y)])
-                    }
-                }
-            }
-        }
+
+        runForAdjacent((nx, ny) => {
+            range.push([(nx), (ny)])
+        }, xo, yo);
 
         //pick random one
         let box = [randNum(set['size']), randNum(set['size'])]
@@ -26,18 +21,13 @@ function propagate(xo,yo) {
         }
         //set as mine
         board[box[1]][box[0]] = 9
-        //incriment surrounding tiles
-        for (let y = -1; y < 2; y++) {
-            if(box[1]+y >= 0 && box[1]+y <= (set['size']-1)) {
-                for (let x = -1; x < 2; x++) {
-                    if(box[0]+x >= 0 && box[0]+x < set['size']) {
-                        if(board[box[1]+y][box[0]+x] != 9) {
-                            board[box[1]+y][box[0]+x]++
-                        }
-                    }
-                }
+
+        // incriment surrounding tiles
+        runForAdjacent((nx, ny) => {
+            if(board[ny][nx] != 9) {
+                board[ny][nx]++
             }
-        }
+        }, box[0], box[1]);
     }
 }
 
@@ -144,6 +134,18 @@ function runForAdjacent(func, xo, yo) {
     
 // }, xo, yo);
 
+function runForAll(func) {
+    for (let y = 0; y < board.length; y++) {
+        for (let x = 0; x < board[y].length; x++) {
+            func(x, y)
+        }
+    }
+}
+
+// runForAll((x, y) => {
+    
+// })
+
 //mark flag
 function flag(x,y) {
     if(stat[y][x] === false){
@@ -199,20 +201,20 @@ function flag(x,y) {
 }
 
 function check(x, y) { //middleman... maybe elim
-    if(firstClick === true) {
-        startTime = Date.now()
-        propagate(x, y)
-        game = "during"
-        updateTime = setInterval(function() {
-            document.getElementById("time").innerHTML = formatTimeElapsed(Date.now() - startTime, true)
-        }, 1)
-        firstClick = false
-    }
+    if(firstClick === true) init(x, y)
     reveal(x, y, true)
     drawGrid()
 }
 
-
+function init(x, y) {
+    startTime = Date.now()
+    propagate(x, y)
+    game = "during"
+    updateTime = setInterval(function() {
+        document.getElementById("time").innerHTML = formatTimeElapsed(Date.now() - startTime, true)
+    }, 1)
+    firstClick = false
+}
 
 function win() { //woohoo!
     endGame()

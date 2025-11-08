@@ -330,7 +330,6 @@ function setToggle() {
 minefield.addEventListener('mousemove', function(e) {
     //find current cursor's box
     let rect = minefield.getBoundingClientRect();
-    let box = []
     boxX = Math.floor(((e.clientX - rect.left)/minefieldDim)*set['size'])
     boxY = Math.floor(((e.clientY - rect.top)/minefieldDim)*set['size'])
 });
